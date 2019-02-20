@@ -154,3 +154,7 @@ trips-*.core
 *.abcl
 *.dx86fsl
 *.lx86fsl
+src/WebParser
+src/jsontrips
+src/SkeletonScore
+src/TextTagger/Stanford*
