@@ -64,6 +64,7 @@
 		 "FeatureHandling"
 		 "probability"
 		 "GrammarandLexicon"
+     "skeletons"
 		 "Chart"
 		 "onlineParser"
 		 "attachment"
