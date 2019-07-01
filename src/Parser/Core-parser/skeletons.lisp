@@ -42,7 +42,7 @@
 		:fill-pointer t)))
 	(format 
 		s 
-		"\{~{~{'~S':'~S',~}~}\}" 
+		"\{~{~{\"~S\":\"~S\",~}~}\}" 
 		(values l)
 	)
 	s)
