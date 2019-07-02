@@ -9,7 +9,7 @@
 	 ;;lex headcat removed --me
      (PP KIND MASS NAME agr SEM SORT PRO SPEC CLASS transform gap gerund)
      ;;(ADVBLS FOCUS VAR SEM SORT ATYPE ARG SEM ARGUMENT NEG TO QTYPE lex transform)
-     (ADVBL VAR SORT ARGSORT SEM ARGUMENT ARG lex headcat transform neg result-only))
+     (ADVBL VAR SORT ARGSORT SEM ARGUMENT ARG lex orig-lex headcat transform neg result-only))
 
     ;;  ADJ -> ADVBL -- location adjective phrases can be used as adverbials e.g., put it right of the door
 
@@ -32,8 +32,8 @@
 	 ;;lex headcat removed --me
      (PP KIND MASS NAME agr SEM SORT PRO SPEC CLASS transform gap gerund)
      ;;(ADVBLS FOCUS VAR SEM SORT ATYPE ARG SEM ARGUMENT NEG TO QTYPE lex transform)
-     (ADVBL VAR SORT ARGSORT ATYPE SEM ARGUMENT lex headcat transform neg result-only)
-     (ADV SORT ATYPE CONSTRAINT SA-ID PRED NEG TO LEX HEADCAT SEM ARGUMENT SUBCAT IGNORE transform)
+     (ADVBL VAR SORT ARGSORT ATYPE SEM ARGUMENT lex orig-lex headcat transform neg result-only)
+     (ADV SORT ATYPE CONSTRAINT SA-ID PRED NEG TO LEX orig-lex HEADCAT SEM ARGUMENT SUBCAT IGNORE transform)
      )	       	       
 
     ;;   GENERAL RULES FOR ADVERBIAL PHRASES
@@ -311,7 +311,8 @@
 	    (sort (? !sort pp-word double-subcat))
             (lf ?lf) (IGNORE -)  (sem ?sem)
             (subcat-map ?submap) (ARGUMENT-MAP ?argmap)
-	    (comparative -) 
+	    (comparative -)
+	    (subcat ?subcat)
             (SUBCAT (% NP (var ?gapv) (sem ?gapsem) 
                        (agr ?gapagr) (case (? case obj -))))))
      )
@@ -492,21 +493,21 @@
 
 (parser::augment-grammar
   '((headfeatures
-     (ADJ VAR ATYPE SORT ARG PRED ARGUMENT lex headcat transform)
+     (ADJ VAR ATYPE SORT ARG PRED ARGUMENT lex orig-lex headcat transform)
      ;; MD 2008/07/17 added post-subcat as a head feature so that it doesn't lead to overgeneration
-     (ADJP VAR ATYPE SORT ARG COMP-OP PRED ARGUMENT lex headcat transform post-subcat sem) 
-     (NUMBER VAR AGR lex headcat transform)
-     (VP vform var agr neg sem subj iobj dobj comp3 part cont gap class subjvar lex headcat transform subj-map tma aux template)
-     (VP- vform var agr neg sem subj iobj dobj dobjvar comp3 part cont gap class subjvar lex headcat transform subj-map tma aux passive passive-map template result)
-     (S vform neg cont stype gap sem subjvar dobjvar var  lex headcat transform subj)
-     (N1 case VAR AGR MASS SEM Changeagr class reln sort lex headcat transform set-restr result rate-activity-nom agent-nom subcat subcat-map) ;added features for nominalizations
-     (NP case VAR AGR MASS SEM Changeagr class reln sort lex headcat transform status subcat subcat-map)
-     (ADVBL SORT ATYPE CONSTRAINT SA-ID PRED NEG TO LEX HEADCAT SEM ARGUMENT SUBCAT IGNORE transform neg)
-     (ADV VAR ATYPE SORT ARG PRED ARGUMENT lex headcat transform)
-     (UTT headcat lex ended subjvar)
-     (quanp headcat lex)
-     (cardinality headcat lex nobarespec)
-     (number headcat lex nobarespec)
+     (ADJP VAR ATYPE SORT ARG COMP-OP PRED ARGUMENT lex orig-lex headcat transform post-subcat sem) 
+     (NUMBER VAR AGR lex orig-lex headcat transform)
+     (VP vform var agr neg sem subj iobj dobj comp3 part cont gap class subjvar lex orig-lex headcat transform subj-map tma aux template)
+     (VP- vform var agr neg sem subj iobj dobj dobjvar comp3 part cont gap class subjvar lex orig-lex headcat transform subj-map tma aux passive passive-map template result)
+     (S vform neg cont stype gap sem subjvar dobjvar var  lex orig-lex headcat transform subj)
+     (N1 case VAR AGR MASS SEM Changeagr class reln sort lex orig-lex headcat transform set-restr result rate-activity-nom agent-nom subcat subcat-map) ;added features for nominalizations
+     (NP case VAR AGR MASS SEM Changeagr class reln sort lex orig-lex headcat transform status subcat subcat-map)
+     (ADVBL SORT ATYPE CONSTRAINT SA-ID PRED NEG TO LEX orig-lex HEADCAT SEM ARGUMENT SUBCAT IGNORE transform neg)
+     (ADV VAR ATYPE SORT ARG PRED ARGUMENT lex orig-lex headcat transform)
+     (UTT headcat lex orig-lex ended subjvar)
+     (quanp headcat lex orig-lex)
+     (cardinality headcat lex orig-lex nobarespec)
+     (number headcat lex orig-lex nobarespec)
      )	       		   
     
     ;;   PRED-VAL and BINARY-CONSTRAINT adverbs become CONSTRAINT advbls.
@@ -595,7 +596,9 @@
       (ARG ?v) (VAR ?mod)
       (role ?advrole)
       ;(SEM ($ f::abstr-obj (F::type (? !ttt ont::position-reln))))
-      (SEM ($ f::abstr-obj (F::type (? !ttt ont::path ont::conventional-position-reln ont::direction ont::complex-ground-reln ont::back ont::front ont::left-of ont::off ont::orients-to ont::right-of ;ont::pos-as-containment-reln ; e.g. "decrease in Mexico" but we would need to have "put the box in the corner"
+      (SEM ($ f::abstr-obj (F::type (? !ttt ont::path ont::conventional-position-reln
+				       ont::direction ; do we want to allow "forward" (as MANNER)?
+				       ont::complex-ground-reln ont::back ont::front ont::left-of ont::off ont::orients-to ont::right-of ;ont::pos-as-containment-reln ; e.g. "decrease in Mexico" but we would need to have "put the box in the corner"
 				       ont::pos-directional-reln ont::pos-distance
 				       ; ont::pos-wrt-speaker-reln ; "I ate there"
 				       ont::resulting-object))))
@@ -647,10 +650,12 @@
 		;;(aux -)   c.f., It had gone bad
 		(gap ?gap)
 		(ellipsis -)
+		(result ?resultsem)
 		))
      (adjp (ARGUMENT (% NP (sem ?sem))) 
       ;(SEM ($ f::abstr-obj (F::type (? ttt ONT::position-reln ont::domain-property)))) ; not sure why we have position-reln here
-      (SEM ($ f::abstr-obj (F::type (? ttt ont::domain-property)))) 
+      (SEM ($ f::abstr-obj (F::type (? ttt ont::domain-property))))
+      (SEM ?resultsem)
       (GAP -)
       ;; (subjvar ?subjvar)
       (SET-MODIFIER -)  ;; mainly eliminate numbers 
@@ -678,11 +683,13 @@
 		;;(aux -)   c.f., It had gone bad
 		(gap ?gap)
 		(ellipsis -)
+		(result ?resultsem)
 		))
      (adjp (ARGUMENT (% NP (sem ?sem))) 
 ;      (SEM ($ f::abstr-obj (F::type (? ttt ONT::path))))
       ;(SEM ($ f::abstr-obj (F::type (? ttt ont::position-reln ont::domain-property))))
       (SEM ($ f::abstr-obj (F::type (? ttt ont::domain-property))))
+      (sem ?resultsem)
       (GAP -)
       ;; (subjvar ?subjvar)
       (SET-MODIFIER -)  ;; mainly eliminate numbers 
@@ -694,7 +701,8 @@
 
      
     ;;  resultative construction using adverbs: e.g., I walked to the store
-    ((vp- (constraint ?new) (tma ?tma) (class (? class ONT::EVENT-OF-CAUSATION)) (var ?v)
+    ((vp- (constraint ?new) (tma ?tma) ;(class (? class ONT::EVENT-OF-CAUSATION)) (var ?v)
+					(class (? class ONT::EVENT-OF-CHANGE)) (var ?v) ; it leaked from the roof ; I arrived into the house
          ;;(LF (% PROP (constraint ?new) (class ?class) (sem ?sem) (var ?v) (tma ?tma)))
 ;      (advbl-needed -) (complex +) (result-present +) (GAP ?gap)
       (SUBJ (% NP (Var ?npvar) (sem ?sem) (agr ?agr) (lex ?lex) (case ?case)))
@@ -828,8 +836,9 @@
 		))
 
      (advbl (ATYPE POST) (ARGUMENT (% S (sem ?sem))) (GAP ?!gap)
-      (ARG ?v) (VAR ?mod)
-      (role ?advrole) 
+	    (ARG ?v) (VAR ?mod)
+	    (SEM ($ f::abstr-obj (F::type (? t ONT::by-means-of)))) ; restricted until we find other examples
+	    (role ?advrole) 
       )
      (add-to-conjunct (val (MODS ?mod)) (old ?lf) (new ?new))
      )
@@ -1519,6 +1528,7 @@
     ((Utt (LF (% SPEECHACT (class ?sa) (var ?v) (constraint ?adv))) (var ?v) (punctype ?pn))
      -disc-attitude> 
      (advbl (ATYPE PRE) (arg ?v) (SA-ID -) (VAR ?advv) (gap -) (WH -) (sort PRED)
+      (ing -)  ;; exclude V-ing adverbials
       (sem ($ f::abstr-obj (f::type (? t ont::valuation-attribute-val ont::emotional-val ont::evoking-emotional-val)))))
      (head (Utt (ended -) (var ?v) (LF (% SPEECHACT (class ?sa) (constraint ?adv1))) (punc -) (punctype ?pn)))
      (add-to-conjunct (val (MODS ?advv)) (old ?adv1) (new ?adv)))
@@ -1535,7 +1545,7 @@
      ;; beetle fix -- Myrosia moved (Argument (% UTT)) where it should be for discourse adverbials
      ;; Potential ambiguity here because these days discourse adverbials also allowed for post-vp positions
      ;; but this is necessary for making things work in cases like "is this true as well"?
-     (advbl (sort DISC) (ATYPE POST) (SA-ID -) (arg ?v) (var ?advv) (gap -) (ARGUMENT (% UTT)))
+     (advbl (sort DISC) (ATYPE POST) (SA-ID -) (arg ?v) (var ?advv) (gap -) (ing -) (ARGUMENT (% UTT)))
      (add-to-conjunct (val (MODS ?advv)) (old ?adv1) (new ?adv)))
      
     ))
@@ -1567,10 +1577,10 @@
 
 (parser::augment-grammar
  '((headfeatures
-    (VP vform var agr neg sem subj iobj dobj comp3 part cont class subjvar lex headcat transform tma subj-map template)
-    (VP- vform var agr neg sem subj iobj dobj comp3 part cont class subjvar lex headcat transform subj-map tma aux passive passive-map template result) ; does not pass up gap
-    (pp headcat lex)
-    (advbl gap headcat lex neg)
+    (VP vform var agr neg sem subj iobj dobj comp3 part cont class subjvar lex orig-lex headcat transform tma subj-map template)
+    (VP- vform var agr neg sem subj iobj dobj comp3 part cont class subjvar lex orig-lex headcat transform subj-map tma aux passive passive-map template result) ; does not pass up gap
+    (pp headcat lex orig-lex)
+    (advbl gap headcat lex orig-lex neg)
     )
 
    ; whom can I take the box to?
@@ -1636,8 +1646,9 @@
 
    ((PP (PTYPE ?pt) (lf ?lf) (case ?c)
 		(lex ?pt) (headcat ?hc)
-     (sem ($ ?somesem)) (var ?gapvar) (agr ?agr)     
-     (gap (% np (lf ?lf) (var ?gapvar) (gap -) (sort (? sort pred descr wh-desc)) (case (? case obj -)) (agr ?agr)))
+		(sem ?somesem) ;(sem ($ ?somesem))
+		(var ?gapvar) (agr ?agr)     
+     (gap (% np (lf ?lf) (var ?gapvar) (gap -) (sort (? sort pred descr wh-desc)) (case (? case obj -)) (agr ?agr) (sem ?somesem)))
      )					; I set the case here to a var, in order to allow -np-spec-of-pp> to work. Otherwise, CASE is not used in PPs
     -pp1-gap> 0.98
     (head (prep (LEX ?pt) (headcat ?hc)))
@@ -1662,7 +1673,7 @@
 			  ;; W::VP)
 		  (SEM ($ F::situation (f::type (? xx ont::event-of-action ont::event-of-state)))))) ;;SITUATION (F::trajectory +)))))))
      )
-    -distance-np-advbl> 1.0 ;.97
+    -extent-np-advbl> 1.0 ;.97
     (head (np (var ?v) (sort unit-measure) (sem ?sem)  
 	      (bare -) ;; we suppress this rule for distances without a specific amount (e.g., "miles")
 	      ;; the semantic restriction is not sufficient to prevent measure-unit phrases such as "a bit" or "a set" as distances so using the lfs to restrict
@@ -1677,14 +1688,14 @@
     )
 
 
-;; adjectival extent adverbials. He jumped three feet high, He jumped three feet higher than than
+;; adjectival extent adverbials. He jumped higher than that
    ((advbl (arg ?arg) ;;(role (:* ONT::distance W::quantity)) 
      (var *) (subj ?anysubj)
 	   (sort binary-constraint) (sem ?sem)
 	   (LF (% PROP (VAR *) (CLASS ONT::extent-predicate) (sem ?sem)
 		  (CONSTRAINT (& (figure ?arg)
 				 (ground (% *PRO* (status definite)
-					    (var **) (class ANYSEM)
+					    (var **) (class ont::VALUE)
 					    (constraint (& (MOD ?v)))))
 				 ))
 		  ))
@@ -1692,29 +1703,31 @@
      (argument (% W::S (subjvar ?anysubj)
 		  (SEM ($ F::situation (f::type (? xx ont::event-of-action ont::event-of-state))))))
      )
-    -extent-adj-advbl> 1.0 ;.97
+    -extent-adj-compar-advbl> 1.0 ;.97
     (head (Adjp (var ?v) (sem ?sem)  (arg **)
 	      (bare -) 
-	      (lf (% prop (class (? cc ont::more-val ont::less-val ont::at-scale-val))))
+	      (lf (% prop (class (? cc ont::more-val ont::less-val))))
 	      (sem ($ f::abstr-obj (f::scale (? sc ont::scale ont::measure-scale)))) 
 	      
 	      ))
      )
 
-      ;; ing VPs as adverbials
-      ;; TEST: Barking, the dog chased the cat.
+   ;; ing VPs as adverbials
+   ;; TEST: Barking, the dog chased the cat.
    ;; TEST: The dog chased the cat barking.
-   ((advbl (arg ?arg) (sem ($ f::abstr-obj (f::information -) (f::intentional -)))
+   ((advbl (arg ?arg) (sem ($ f::abstr-obj (f::information -) (f::intentional -) (f::type ONT::IMPLICIT-OVERLAP)))
      (argument (% S (sem ($ f::situation (f::aspect f::dynamic))) (subjvar ?!subjvar) (subj ?!subj)
 		  (var ?arg))) 
      (sort pred) (gap -) (atype (? atp pre post))
+     (ing +)
      (role ONT::MANNER) (var **)
      (LF (% PROP (CLASS ONT::IMPLICIT-OVERLAP) (VAR **) 
 	    (CONSTRAINT (& (FIGURE ?arg) (GROUND ?v)))
-	    (sem ($ f::abstr-obj (f::information -) (f::intentional -)))))
+	    (sem ($ f::abstr-obj (f::information -) (f::intentional -) (f::type ONT::IMPLICIT-OVERLAP)))))
      )
     -vp-ing-advbl> .97
-    (head (vp (vform ing) (var ?v) (gap -) (aux -) (advbl-necessary -)
+    (head (vp (vform ing) (var ?v) (gap -) ;;(aux -) ; aux: Having eaten the pizza...
+	      (advbl-necessary -)
 	   (constraint ?con)  (transform ?transform) (class ?class)
 	   (subj (% np (var ?!subjvar) (agr ?subjagr) (sem ?subjsem) (gap -)))
 	   ;(subjvar (% *PRO* (VAR *) (gap -) (sem ?subjsem)))

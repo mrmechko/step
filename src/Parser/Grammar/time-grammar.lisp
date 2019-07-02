@@ -22,10 +22,10 @@
 ;;(cl:setq *grammar-time-Values*
 (parser::augment-grammar
   '((headfeatures
-     (NP VAR KIND NAME PRO SPEC ATTACH Changeagr transform lex headcat)
-     (PP VAR KIND CASE MASS NAME agr SEM PRO SPEC QUANT ATTACH transform lex headcat)
-     (ADVBL SEM transform lex headcat)
-     (VALUE VAR transform lex headcat)
+     (NP VAR KIND NAME PRO SPEC ATTACH Changeagr transform lex orig-lex headcat)
+     (PP VAR KIND CASE MASS NAME agr SEM PRO SPEC QUANT ATTACH transform lex orig-lex headcat)
+     (ADVBL SEM transform lex orig-lex headcat)
+     (VALUE VAR transform lex orig-lex headcat)
      (time-value var transform headcat)
      )			
 
@@ -137,7 +137,7 @@
       (ordinal (lex (? x w::half w::quarter)) (lf (nth ?n)))
       (adv (lex past))
       ;;(head (NUMBER (VAL ?hour) (NTYPE w::HOUR12)))
-     (head (pro (lf (:* ONT::TIME-OBJECT (? ref W::NOON W::MIDNIGHT)))))
+     (head (pro (lf (? cc ONT::NOON ONT::MIDNIGHT))))
      (compute-val-and-ntype (expr (/ 60 ?n)) (newval ?minute) (ntype ?n2))
       )
 
@@ -161,7 +161,7 @@
     ;;  e.g.,  5 am, 5 pm
     ((time-value ;;(LF (% time-description (sem ($ f::time (f::intentional -) (f::information -)(f::time-function f::clock-time) (f::time-scale f::point)))
              ;;(constraint ?newcon)))
-      (Hour ?hour) (Minute ?minute) (am-pm (:* ont::TIME-OBJECT (? x AM PM)))
+      (Hour ?hour) (Minute ?minute) (am-pm (? tt ont::DAY-STAGE-PM ont::DAY-STAGE-AM))
       (AGR 3s) (lex (?lex1 ?lex2))
       (sem ($ f::time (f::time-function f::clock-time) (f::intentional -) (f::information -))) ;(f::time-scale f::point)))
       )
@@ -172,8 +172,8 @@
 		       (Hour ?hour) (Minute ?minute) (am-pm -)))
 		 ;; (LF (% time-description (sem ?sem) (constraint ?con)))))
      (N (SORT PRED) (lex ?lex2)     
-      (LF (:* ont::TIME-OBJECT (? x AM PM))))
-      )
+      (LF (? tt ont::DAY-STAGE-PM ont::DAY-STAGE-AM))
+      ))
      ;;(add-to-conjunct (val (am-pm ?lf)) (old ?con) (new ?newcon)))
 
     ;;  noon, midnight
@@ -183,7 +183,7 @@
       (sem ($ f::time (f::intentional -) (f::information -)(f::time-function f::clock-time))) ;(f::time-scale f::point)))
       )
      -noon1> 1.0
-     (head (pro (lf (:* ONT::TIME-OBJECT (? ref W::NOON W::MIDNIGHT)))))
+     (head (pro (lf (? tt ONT::NOON ONT::MIDNIGHT))))
      )
     
     ;; Time + temporal pro  e.g., 12 noon, ...
@@ -198,7 +198,7 @@
 			;;(sem ?sem) (lf ?lf)
 			;;(lf (% time-description (constraint ?c1)))
 	      ))
-     (pro (lf (:* ONT::TIME-OBJECT (? ref W::NOON W::MIDNIGHT))))
+     (pro (lf (? tt ONT::NOON ONT::MIDNIGHT)))
      ;;(add-to-conjunct (val (am-pm ?ref)) (old ?c1) (new ?newc))
      )
 
@@ -316,6 +316,7 @@
 (parser::augment-grammar
   '((headfeatures
      (VALUE transform)
+     (NP subcat)
      )		
    
     ;; rate expressions
@@ -343,8 +344,9 @@
       (ratenumsem ?sem1)
       (ratedenomsem ?sem2)
        )
-     -units-per-period2> 
+     -units-per-period2> .98
      (head (np (lf ?lf) (sort unit-measure) (wh -) (var ?v1) (lex ?x) (sem ?sem1) (class ?cl)
+	       (ellided -)
 	       ))
      (np (agr 3s) (var ?per) (lf (% description (status ont::indefinite)))
       (sem ?sem2) (mass count)
@@ -369,8 +371,12 @@
       ))
 
 
-     ;; m/s = meters per second
-      ((np (LF (% description (var ?v) (class ont::rate) (status indefinite) (constraint (& (repeats ?v1) (over-period ?per)))))
+    ;; m/s = meters per second
+    ;; added kg/ha etc
+    ((np (LF (% description (var ?v) (class ont::rate) (status indefinite)
+		(constraint (& (repeats ?v1)
+			       (over-unit ?per) ;(over-period ?per)
+			       ))))
             (var ?v) (case (? case sub obj)) (SORT UNIT-MEASURE) (AGR 3s)
             (time-converted +)
             (sem ($ f::abstr-obj (f::intentional -) (f::information -) (f::mobility -)
@@ -383,27 +389,31 @@
 		 (sem ?sem1)
 	          ))
        (punc (lex (? l slash punc-slash)))
-       (n (w::agr w::3s) (var ?v)	(LF ?per) (mass count)
-	(sem ($ f::time (f::scale ont::duration-scale))) (sem ?sem2)
+       (n (w::agr (? agr w::3s w::3p))  ; km is 3p: e.g., 5km
+	  (var ?v)	(LF ?per) (mass count)
+	  ;(sem ($ f::time (f::scale ont::duration-scale)))
+	  (sem ($ (? t f::time f::abstr-obj) (f::scale ont::measure-scale)))
+	  (sem ?sem2)
 	))
   
     ;; e.g., the gdp / gtp ratio
 
-    ((n1 (sort pred) (var ?v) (class (:* ONT::RATIO ?x)) (agr ?agr) (CASE (? case SUB OBJ))
-      (sem ?sem) (lex ?lex) (subcat -) (restr (& (figure ?v1) (ground ?v2))))
+    ((n1 (sort pred) (var ?v) (class (:* ONT::RATIO W::RATIO)) (agr ?agr) (CASE (? case SUB OBJ))
+      (sem ?sem) (lex ?lex) (subcat (% -)) (restr (& (figure ?v1) (ground ?v2))))
      -ratio1> 1
-     (head (np (lf ?num) (bare-np +) (wh -) (var ?v1) (agr 3s)))
+     (head (np (lf ?num) (name-or-bare +) (wh -) (var ?v1) (agr 3s)))
      (punc (lex (? l slash punc-slash)))
-     (np (w::agr w::3s) (bare-np +) (var ?v2) (LF ?denom))
-     (n (LF (:* ONT::RATIO ?x)) (var ?v) (sem ?sem) (agr ?agr) (lex ?lex))
+     (np (w::agr w::3s) (name-or-bare +) (var ?v2) (LF ?denom))
+     (n (LF (:* ONT::RATIO W::RATIO)) (var ?v) (sem ?sem) (agr ?agr) (lex ?lex))
      )
 
-    ((n1 (sort pred) (var ?v) (class (:* ONT::RATIO ?x)) (agr ?agr) (CASE (? case SUB OBJ))
-      (sem ?sem) (lex ?lex) (subcat -) (restr (& (figure ?v1) (ground ?v2))))
-     -ratio2> 1.1  ;; override parser's reluctance to make bare NP's
-     (head (np (lf ?num) (wh -) (bare-np +) (var ?v1) (agr 3s)))
-     (np (w::agr w::3s) (var ?v2) (bare-np +) (agr ?agr) (LF ?denom))
-     (n (LF (:* ONT::RATIO ?x)) (var ?v) (sem ?sem) (lex ?lex))
+    ((n1 (sort pred) (var ?v) (class (:* ONT::RATIO W::RATIO)) (agr ?agr) (CASE (? case SUB OBJ))
+      (sem ?sem) (lex ?lex) (subcat (% -)) (restr (& (figure ?v1) (ground ?v2))))
+     -ratio2> 1 ;; I deleted 1.1 here as values >1 can caused chaotic search (and did lead to problems)
+                ;;   (if the problem comes up that originally motivated the high value we should consider other ways to fix it JFA 4/19
+     (head (np (lf ?num) (wh -) (name-or-bare +) (var ?v1) (agr 3s)))
+     (np (w::agr w::3s) (var ?v2) (name-or-bare +) (agr ?agr) (LF ?denom))
+     (n (LF (:* ONT::RATIO W::RATIO)) (var ?v) (sem ?sem) (lex ?lex))
      )
 
     #|
@@ -430,7 +440,7 @@
 ;;(cl:setq *grammar-TIME-LOC*
 (parser::augment-grammar
   '((headfeatures
-     (advbl headcat lex)
+     (advbl headcat lex orig-lex)
      (np pred  Changeagr transform headcat))
 
     
@@ -559,7 +569,7 @@
       (var *) (case ?case)
       ;;(var ?var)
       (lf (% PROP (class ONT::iteration-period) (var *) (constraint (& (FIGURE ?argvar) (GROUND ?valvar)))))
-      (atype post)
+      (atype (? atype post pre))
       (sem ?sem)
       (arg ?argvar)
       )
@@ -598,7 +608,8 @@
      -deictic-time-advbl> 1
      (head (np (sem ?valsem) (var ?valvar) (headless -) (coerced -)
 	       (sem ($ f::time)) ;(f::time-scale F::INTERVAL)))
-	       (LF (% DESCRIPTION (status ont::definite) (class ont::time-object) (CONSTRAINT (& (proform (? cr W::THIS W::THAT W::THOSE W::THESE)))) ;;(? cr this that those these))))))
+	       (LF (% DESCRIPTION (status ont::definite) (class ont::time-object)
+		      (CONSTRAINT (& (proform (? cr W::THIS W::THAT W::THOSE W::THESE)))) ;;(? cr this that those these))))))
 		      ))
 	       ))
      (compute-sem-features (lf ont::event-time-rel) (sem ?sem)))
@@ -669,13 +680,13 @@
 (parser::augment-grammar
   '((headfeatures 
      (name var agr transform headcat)
-     (N1 var lex transform sem quantity subcat argument indef-only headcat)
-     (N var lex transform lf sem agr headcat)
-     (NP headcat lex)
-     (number-sequence headcat lex)
-     (mixed-sequence headcat lex)
+     (N1 var lex orig-lex transform sem quantity subcat argument indef-only headcat)
+     (N var lex orig-lex transform lf sem agr headcat)
+     (NP headcat lex orig-lex)
+     (number-sequence headcat lex orig-lex)
+     (mixed-sequence headcat lex orig-lex)
      (nname headcat)
-     (rnumber headcat lex restr var)
+     (rnumber headcat lex orig-lex restr var)
      (number headcat)
      )    
 
@@ -688,6 +699,19 @@
      -tenty-digit>
      (head (number (nobarespec ?nbs) (lf ?lf) (val ?!v1) (lex ?l1) (sem ?sem)
 		   (NTYPE w::TENS) (coerce ?coerce) (digits -)))
+     (number (val ?!v2) (lex ?l2) (NTYPE w::DIGIT) (coerce ?coerce) (digits -))
+     (compute-val-and-ntype (expr (+ ?!v1 ?!v2)) (newval ?newval) (ntype ?ntype)))
+
+    ;; Basic Number Expressions with hyphens
+    ;;  e.g., thirty-one, twenty-seven
+    ((number (VAL ?newval) (agr 3p) (lex (?l1 ?l2)) (ntype ?ntype)
+      (var *) (LF ?lf) (coerce ?coerce) (sem ?sem)
+      (nobarespec ?nbs)
+	     )
+     -tenty-digit-hyphen>
+     (head (number (nobarespec ?nbs) (lf ?lf) (val ?!v1) (lex ?l1) (sem ?sem)
+		   (NTYPE w::TENS) (coerce ?coerce) (digits -)))
+     (punc (lex W::punc-minus))
      (number (val ?!v2) (lex ?l2) (NTYPE w::DIGIT) (coerce ?coerce) (digits -))
      (compute-val-and-ntype (expr (+ ?!v1 ?!v2)) (newval ?newval) (ntype ?ntype)))
 
@@ -932,9 +956,11 @@
       (nobarespec ?nbs)
 	     )
      -range-hyphen> 1
-     (head (number (nobarespec ?nbs) (lf ?lf) (val ?!v1) (lex ?l1)))
+     (head (number (nobarespec ?nbs) (lf ?lf) (val ?!v1) (lex ?l1) (has-digits +))) ; excludes three-nine
      (punc (lex  w::punc-minus))
-     (number (val ?!v2) (lex ?l2)))
+     (number (val ?!v2) (lex ?l2) (has-digits +))
+     (less-than (val1 ?!v1) (val2 ?!v2)) ; excludes 9-3
+     )
 
     ;; from 20 to 35
     ((number (RESTR (& (min ?!v1) (max ?!v2))) (agr 3p) (lex (?l1 ?l2)) (ntype ?ntype) (range +)
@@ -1120,16 +1146,18 @@
      ((name (lex ?seq) (lf ?cl) (SEM ?sem) (agr 3s) (name +) (generated +)
 	    (sort ?sort) (subcat ?subcat) (subcat-map ?smap)
       )
-     -noun-nname2> 0.98 ;0.96  ; increased to 0.98 so "block 1 and block 3" would parse
+     -noun-nname2> 0.97 ;0.96  ; increased  so "block 1 and block 3" would parse
      ;; Myrosia 10/26/03 added (name -) to prevent cases like "aspirin 7" or "pittsford 8"
      ;; also lowered the probability considerably to avoid overgeneration
      ;; swift 09/22/11 removing the sem restriction to allow "unit 1" "scenario 2" etc.
-     (head (n (name -) (one -) (SEM ?sem) (SEM ($ (? xx f::PHYS-OBJ f::abstr-obj) (f::scale -)))   ;; don't want scales like "S" for seconds, etc
-	      (WH -) (lf ?cl) 
-	    (LF (:* ?lfparent ?lfform))
-	    (lex ?lex)
-	    (sort (? !sort unit-measure)) (subcat ?subcat) (subcat-map ?smap))) ; pass up sort and subcat so we can use n1-reln3 (e.g., the beat 1 of meausure 1)
-     (BOUND (arg1 ?cl))
+      (head (n (name -) (one -) (SEM ?sem) (SEM ($ (? xx f::PHYS-OBJ f::abstr-obj)
+						   (f::type (? !yy ONT::DOMAIN))
+						   (f::scale -)))   ;; don't want scales like "S" for seconds, etc
+	       (WH -) (lf ?cl) 
+	       (LF (:* ?lfparent ?lfform))
+	       (lex ?lex)
+	       (sort (? !sort unit-measure)) (subcat ?subcat) (subcat-map ?smap))) ; pass up sort and subcat so we can use n1-reln3 (e.g., the beat 1 of meausure 1)
+      (BOUND (arg1 ?cl))
      ;;     (nname (lex ?name))
      (rnumber (val ?name))
      (simple-cons (in1 ?lfform) (in2 ?name) (out ?seq))
@@ -1309,8 +1337,8 @@
 
 (parser::augment-grammar
   '((headfeatures 
-     (DATE lex headcat agr)
-     (number ntype var lex headcat)
+     (DATE lex orig-lex headcat agr)
+     (number ntype var lex orig-lex headcat)
      )
 ;; Monday
     ((DATE (INT +) (LF ONT::DAY-NAME) (DOW ?var) (var *)
@@ -1326,8 +1354,8 @@
 ;; lex and headcat added for aug-trips
 (parser::augment-grammar
   '((headfeatures 
-     (DATE var lex headcat agr)
-     (number ntype var lex headcat)
+     (DATE var lex orig-lex headcat agr restr)
+     (number ntype var lex orig-lex headcat)
      )
 
   ;; 2004
@@ -1410,6 +1438,15 @@
 		))
    (number (VAL ?n) (NTYPE w::DAY)))
 
+  ;; 31 July
+  ((DATE (INT +) (Month ?m) (DAY ?n)(lex ?hlex) (headcat ?hcat) (day-specified +))
+   -dt-month-day-rev> 1.0
+   (number (VAL ?n) (NTYPE w::DAY))
+   (head (name (LF ONT::MONTH-NAME)
+		(lf ?M) (lex ?hlex) (headcat ?hcat)
+		))
+   )
+  
   ;; July 31st
   ((DATE (INT +) (Month ?m) (DAY ?n)(lex ?hlex) (headcat ?hcat) (day-specified +))
    -dt-month-day-ord> 1.0
@@ -1524,14 +1561,24 @@
 
    ;; late june, mid 06/2010, early 2006
 
-     ((date (day ?d) (dow ?dow) (month ?month) (year ?year) (phase (? c ont::stage-val  ont::scheduled-time-modifier))
+     ((date (day ?d) (dow ?dow) (month ?month) (year ?year) (phase (? c ont::stage-val  ont::scheduled-time-modifier ont::middle-val))
        (var ?v))
       -mid-month-year> 1.0
-      (adjp (var ?adjv) (LF (% PROP (class (? c ont::stage-val  ont::scheduled-time-modifier)))) (arg ?v))
+      (adjp (var ?adjv) (LF (% PROP (class (? c ont::stage-val  ont::scheduled-time-modifier ont::middle-val)))) (arg ?v))
       (head (date (INT +) (hour -) (minute -) (day ?d) (dow ?dow) (month ?month) (year ?year)))
       
       )
 
+     ; to fix: this assumes there is only one thing in restr
+     ; mid-January (note: mid- is a prefix)
+     ((date (day ?d) (dow ?dow) (month ?month) (year ?year) (phase (:* ONT::MIDDLE-VAL W::MID)) ; note: the "-" is removed from W::MID so it looks like the parse when it uses -mid-month-year> for "mid January"
+       (var ?v))
+      -mid-month-year-prefix> 1.01
+      (head (date (INT +) (hour -) (minute -) (day ?d) (dow ?dow) (month ?month) (year ?year)
+		  (restr (% W:& (:MOD (% w::*PRO* (class (:* ONT::MIDDLE-VAL W::mid-))))))
+		  ))
+      
+      )
 
    ;;  Dates as adverbials: must either have a DOW or a DAY feature (i.e., we can't have all of them empty) - so we use two rules...
    ;; Those with a day of the week, e.g.,  Monday I go
@@ -1682,22 +1729,39 @@
 
     ;; Time expression ranges
      
-     ;; dates: march 23 (2004) - april 8 (2004); 11/28/2004 - 12/28/2004
+     ;; date ranges: march 23 (2004) - april 8 (2004); 11/28/2004 - 12/28/2004
      ;; times: 2 - 3pm
+     ;; June to September
     ((NP (LF  (% DESCRIPTION (VAR *) (status ?st)
 		 (CLASS ONT::TIME-RANGE)(CONSTRAINT (& (to ?v2) (from ?v1)))))
-      (SEM ($ F::TIME (F::TIME-FUNCTION ?tf1) (F::SCALE -)))
+      (SEM ($ F::TIME (F::TIME-FUNCTION ?tf1) (F::SCALE -))) (sort pred)
       (VAR *) (headcat ?hcat))
       -date-range>
      (NP (LF  (% DESCRIPTION (VAR ?v1) (status ?st)))
       (SEM ($ F::TIME (F::TIME-FUNCTION ?tf)))
       (VAR ?v1) (headcat ?hcat))
-     (punc (lex (? lx punc-tilde punc-minus))) ;; currently - defined only as punc-minus in parser
+     (word (lex (? c to til through until punc-tilde punc-minus)))
      (head
       (NP (LF  (% DESCRIPTION (VAR ?v2) (status ?st)))
 	  (SEM ($ F::TIME (F::TIME-FUNCTION ?tf)))
 	  (VAR ?v2))))
-   
+
+     ;; from June to September
+    ((NP (LF  (% DESCRIPTION (VAR *) (status ?st)
+		 (CLASS ONT::TIME-RANGE)(CONSTRAINT (& (to ?v2) (from ?v1)))))
+      (SEM ($ F::TIME (F::TIME-FUNCTION ?tf1) (F::SCALE -))) (sort pred)
+      (VAR *) (headcat ?hcat))
+      -date-range-to>
+     (word (lex (? xx from)))
+     (NP (LF  (% DESCRIPTION (VAR ?v1) (status ?st)))
+      (SEM ($ F::TIME (F::TIME-FUNCTION ?tf)))
+      (VAR ?v1) (headcat ?hcat))
+     (word (lex (? c to til through until)))
+     (head
+      (NP (LF  (% DESCRIPTION (VAR ?v2) (status ?st)))
+	  (SEM ($ F::TIME (F::TIME-FUNCTION ?tf)))
+	  (VAR ?v2))))
+    
     ;; e.g., "the 1980s" "the 40s" 
     ;;  we can't build an N1 here as then it would become a SET through the INDV-PLURAL rules.
     ((NP (LF (% DESCRIPTION (VAR ?v) (status ?spec) (CLASS ONT::TIME-RANGE) (CONSTRAINT (& (decade ?n) (poss ?poss)))))
@@ -1761,8 +1825,7 @@
          (add-to-conjunct (val (& (value ?num))) (old ?r) (new ?newr))
 	 (add-to-conjunct (val (& (amount (% *PRO* (status ont::indefinite) (class ont::NUMBER) (VAR ?nv) (constraint ?newr)))
 				  (unit ?c))) (old ?restr) (new ?constr))
-	 )
-    
-  ))
+     )
+    ))
 
   

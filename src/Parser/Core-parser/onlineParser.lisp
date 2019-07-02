@@ -204,10 +204,18 @@
      experiment with different scoring functions"
   (cond
    ((eql (agenda-item-start i) (agenda-item-end i)) 1) ;;  insurance check
-   (t (min #|(* (probability-score i) 
-	      (arc-length-score i)) 1))))|#
-       (+ (probability-score i) 
-	  (* (- 1 (probability-score i)) (arc-length-score i))) 1))))
+   (t (reached-end-boost (min #|(* (probability-score i) 
+			  (arc-length-score i)) 1))))|#
+			  (+ (probability-score i) 
+			     (* (- 1 (probability-score i)) (arc-length-score i))) 1)
+			 (agenda-item-end i)))))
+			 
+
+(defun reached-end-boost (score end-posn)
+  "This gives the score a boost if it has reached the end of the sentence. This helps focus the search near the end when it often gets swamped"
+  (if (= end-posn (get-max-position))
+      (boost-by-percent score .1)
+      score))
 
 (defun calculate-entry-score (e)
   "This is used for final output, so need not be efficient"
@@ -234,25 +242,56 @@
       (parser-warn "Init-agenda called with non numberic arg: ~S. it was ignored" number-of-buckets))
     
     )
-   
-  (defun add-to-agenda (entry)
-    "Add an entry onto the agenda"
-    (when entry
-      (when (and (eq *agenda-trace* 'ADD)
-		 (entry-p entry))
-	(format t "~%Making ENTRY ~S into agenda item with prob ~S ..." (entry-name entry) (entry-prob entry)
-		))	
-      (Cond
-       ((Entry-P entry) (compute-score-and-add (make-agenda-item
-						:type 'entry :prob (entry-prob entry) :entry entry
-						:Id (Entry-name entry)
-						:Start (Entry-start entry) :end (entry-end entry))))
-       ((agenda-item-p entry)
-	(compute-score-and-add entry))
-       (t (break "Bad call to add-to-agenda: ~S" entry)))
+
+;; new tracing facility, not completed yet
+
+(defvar *trace-record* nil)
+
+(defun trace-agenda (&key start end rule)
+  (if (and (null start) (null end) (null rule))
+      (setq *agenda-trace* 'ADD)
+      ;;  otherwise we're tracing based on some criteria
+      (setq *trace-record* (list start end rule))
       ))
-  
-  (defun compute-score-and-add (i)
+    
+(defun untrace-agenda ()
+  (setq *agenda-trace* nil)
+  (setq *trace-record* nil))
+
+
+(defun add-to-agenda (entry)
+  "Add an entry onto the agenda"
+  (when entry
+    (when (and (eq *agenda-trace* 'ADD)
+	       (entry-p entry))
+      (format t "~%Making ENTRY ~S into agenda item with prob ~S ..." (entry-name entry) (entry-prob entry)
+	      ))
+    (if *trace-record* (if (entry-p entry)
+			   (trace-if-desired (entry-start entry) (entry-end entry) (entry-rule-id entry) entry 'adding)
+			   (trace-if-desired (agenda-item-start entry) (agenda-item-end entry) (agenda-item-id entry) entry 'adding)))
+    (Cond
+      ((Entry-P entry) (compute-score-and-add (make-agenda-item
+					       :type 'entry :prob (entry-prob entry) :entry entry
+					       :Id (Entry-name entry)
+					       :Start (Entry-start entry) :end (entry-end entry))))
+      ((agenda-item-p entry)
+       (compute-score-and-add entry))
+      (t (break "Bad call to add-to-agenda: ~S" entry)))
+    ))
+
+(defun trace-if-desired (start end ID entry op)
+  (when (AND
+	  (or (null (third *trace-record*))
+	      (eq ID (third *trace-record*)))
+	  (or (null (second *trace-record*))
+	      (eq start (car *trace-record*)))
+	  (or (null (car *trace-record*))
+	      (eq end (second *trace-record*)  )))
+    ;; it can be used to change this to a break when trying to isolate problems
+    (format t "~%~%AGENDA ~S with score ~S: ~S"  op (calculate-score entry) entry))
+  )
+
+(defun compute-score-and-add (i)
     (if (>= (agenda-item-prob i) (entry-threshold))
 	(let* ((score (calculate-score i))
 	       (bucket (max 0 (min (floor (* score (/ *number-of-buckets-for-agenda* 2)))
@@ -286,21 +325,31 @@
           (t (cons (car agenda-bucket) 
                    (insert-in-agenda item score (cdr agenda-bucket))))))
 
-  (defun get-next-entry nil
-    (let ((entry (car (aref (agenda *chart*) (top-bucket *chart*)))))
-      (pop (aref (agenda *chart*) (top-bucket *chart*)))
-      (when (null (aref (agenda *chart*) (top-bucket *chart*)))
-        (setf (top-bucket *chart*) (find-new-top-bucket (top-bucket *chart*)))
-        )
-      ;;      (format t "~% exploring entry ~S~%" entry)
-      ;; (format t "~% exploring entry ")
-      ;; (show-entry-with-name entry '(lex))      
-      entry))
+(defun get-next-entry nil
+  ;;(agenda-sanity-check)
+  (let ((entry (car (aref (agenda *chart*) (top-bucket *chart*)))))
+    (pop (aref (agenda *chart*) (top-bucket *chart*)))
+    (when (null (aref (agenda *chart*) (top-bucket *chart*)))
+      (setf (top-bucket *chart*) (find-new-top-bucket (top-bucket *chart*)))
+      )
+    (if *trace-record*
+	(trace-if-desired (agenda-item-start entry) (agenda-item-end entry) (agenda-item-id entry) entry 'processing))
+    entry))
 
-  (defun find-new-top-bucket (n)
-    (if (> n 0)
+(defun agenda-sanity-check nil
+  (if (not (eq (find-new-top-bucket 200) (top-bucket *chart*)))
+      (break "~%~% PROBLEM WITH Agenda: top-bucket say ~S but ~S is not empty~%~%" (top-bucket *chart*) (find-new-top-bucket 200))
+      ))
+
+(defun find-new-top-bucket (n)
+  (if (> n 0)
       (if (aref (agenda *chart*) n) n (find-new-top-bucket (- n 1)))
       0))
+
+(defun agenda-sanity-check nil
+  (if (not (eq (find-new-top-bucket 200) (top-bucket *chart*)))
+      (break "~%~% PROBLEM WITH Agenda: top-bucket say ~S but ~S is not empty~%~%" (top-bucket *chart*) (find-new-top-bucket 200))
+      ))
   
 (defun peek-agenda nil
     (car (aref (agenda *chart*) (top-bucket *chart*))))
@@ -489,8 +538,10 @@
 	 (score
 	  (* (if (and (not (eq (constit-cat c) 'w::pro))
 		      (not (member (get-value c 'w::lex) '(w::one)))
-		      (or (if (symbolp lf) (member lf '(ont::referential-sem ont::modifier)))
-			  (if (consp lf) (intersection lf '(ont::referential-sem ont::modifier)))))
+		      ;(or (if (symbolp lf) (member lf '(ont::referential-sem ont::modifier)))
+			  ;(if (consp lf) (intersection lf '(ont::referential-sem ont::modifier)))))
+		      (or (if (symbolp lf) (member lf '(ont::referential-sem ont::property-val)))
+			  (if (consp lf) (intersection lf '(ont::referential-sem ont::property-val)))))
 		 ;; addition penalty if it contains a hyphen!
 		 (if (position #\- (coerce (symbol-name lex) 'list))
 		     (* *referential-sem-penalty*  *referential-sem-penalty*)

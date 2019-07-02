@@ -546,7 +546,16 @@
 	(cons (car starts)
 	      (remove-dups (cdr starts) (union (caar starts) seen))))))
     
-     
+
+(defun eliminate-stoplist-senses (sense)
+  (let* ((wnsenses (find-value sense :wn-sense-keys))
+	 (reduced-wnsenses (remove-if #'wf::stoplist-p wnsenses)))
+    (if (null reduced-wnsenses)
+	(remove-arg sense :wn-sense-keys)
+	(if (< (list-length reduced-wnsenses) (list-length wnsenses))
+	    (replace-arg sense :wn-sense-keys reduced-wnsenses)
+	    sense))
+    ))
 
   
 ;; ========================
@@ -584,7 +593,11 @@
 	 ;; (score (find-value in :score))
 	 (prob (find-value in :prob))
 	 (sense-info (find-value in :sense-info))
+	 (reduced-sense-info (remove-if #'null (mapcar #'(lambda (x) (eliminate-stoplist-senses x))
+						       sense-info)))
+	 ;;(xx (format t "~%wnsenses are ~S then ~S" sense-info reduced-sense-info))
 	 (alternative (find-value (car sense-info) :alternate-spellings))
+	 
 	 (reduced-features (remove-args (cddr in) '(:start :end)));; :prob)))
 	 (word (if (and (consp new-tokens) (eq number-of-tokens  1))
 		   (car new-tokens)
@@ -1032,6 +1045,7 @@
     (let* ((constit (car constit-tree))
 	   (lf (get-value constit 'w::lf))
 	   (lex (get-value constit 'W::lex))
+	   (orig-lex (get-value constit 'W::orig-lex))
 	   (sem (get-value constit 'w::sem))
 	   (input (get-value constit 'w::input))
 	   (notes (get-value constit 'w::notes))
@@ -1039,14 +1053,18 @@
       (unless (or (null var) (assoc var (get-temp-symbol-table)))
 	(multiple-value-bind (new-lf pros)
 	    (remove-*pro*-from-lf lf)
-	  (add-to-temp-symbol-table var (if (constit-p new-lf) 
-					    (replace-sem-in-lf
-					     (add-feature-value
-					      (add-feature-value new-lf 'w::input input)
-					      'w::lex
-					      lex)
-							 sem)
-					    new-lf))
+	  (add-to-temp-symbol-table
+	   var
+	   (if (constit-p new-lf)
+	       (let* ((new-lf2 (add-feature-value
+				(add-feature-value new-lf 'w::input input)
+				'w::lex	lex))
+		      (new-lf3 (if (not (member orig-lex '(nil -)))
+				   (add-feature-value new-lf2 'w::orig-lex orig-lex)
+				 new-lf2)))
+		 (replace-sem-in-lf new-lf3 sem))
+	     new-lf))
+	     
 	  ;; if there were *PRO* objects found, add them too
 	  (if pros
 	      (mapc #'(lambda (x)

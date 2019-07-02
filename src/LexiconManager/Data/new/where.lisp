@@ -36,15 +36,22 @@
      (SEM (F::information F::information-content))
      (preference .98)  ;; prefer TO-LOC all other things being equal, as it is more restrictive
      )
-    ((LF-PARENT ONT::TO-LOC)
+    #|((LF-PARENT ONT::TO-LOC)   ;; no longer necessary given the RESULT construction
      (SYNTAX (W::IMPRO-CLASS ONT::LOCATION))
      (TEMPL ppword-question-adv-NP-templ)
      (SEM (F::information F::information-content))
-     )
+    )|#
+    
     ((LF-PARENT ONT::AT-LOC)
      (SYNTAX (W::wh W::R))
      (TEMPL PPWORD-ADV-TEMPL)
      )
+
+    ((LF-PARENT ONT::AT-LOC)
+     (example "I found it where you put it")
+     (TEMPL binary-constraint-S-decl-TEMPL)
+     )
+    
     )
    )
 ))
