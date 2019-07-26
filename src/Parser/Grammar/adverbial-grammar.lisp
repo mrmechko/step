@@ -590,13 +590,13 @@
      (advbl (particle -) (ATYPE POST)
       (ARGUMENT (% S (sem ?sem) (var ?v) ;;(subjvar ?subjvar)))   06/18 I commented out tis as it si sometimes not specified in the ADVBL, and thus sets it to -, and thus the S1> rule cannot match
 		   ))
-      (GAP -)
+      (GAP -) (result-only -)
       ;;(subjvar ?subjvar)   ;Not sure why this was here - maybe for purpose clauses. Leaving it in causes many parses to fail as the SUBJVAR in the new VP is wrecked
      ;; the SUBJVAR is required in the argument to be able to pass in the subject for things like "the dog walked barking".
       (ARG ?v) (VAR ?mod)
       (role ?advrole)
       ;(SEM ($ f::abstr-obj (F::type (? !ttt ont::position-reln))))
-      (SEM ($ f::abstr-obj (F::type (? !ttt ont::path ont::conventional-position-reln
+      (SEM ($ f::abstr-obj (F::type (? !ttt ont::goal-reln ont::conventional-position-reln
 				       ont::direction ; do we want to allow "forward" (as MANNER)?
 				       ont::complex-ground-reln ont::back ont::front ont::left-of ont::off ont::orients-to ont::right-of ;ont::pos-as-containment-reln ; e.g. "decrease in Mexico" but we would need to have "put the box in the corner"
 				       ont::pos-directional-reln ont::pos-distance
@@ -701,8 +701,9 @@
 
      
     ;;  resultative construction using adverbs: e.g., I walked to the store
-    ((vp- (constraint ?new) (tma ?tma) ;(class (? class ONT::EVENT-OF-CAUSATION)) (var ?v)
-					(class (? class ONT::EVENT-OF-CHANGE)) (var ?v) ; it leaked from the roof ; I arrived into the house
+    ;; it seems this is also used for passive transitives, e.g., The box was moved to the corner
+    ((vp- (constraint ?new) (tma ?tma) (class (? class ONT::EVENT-OF-CAUSATION)) (var ?v)
+				       ;(class (? class ONT::EVENT-OF-CHANGE)) (var ?v) ; it leaked from the roof ; I arrived into the house; but we need to exclude e.g, used/expressed in the liver (yes, passive)
          ;;(LF (% PROP (constraint ?new) (class ?class) (sem ?sem) (var ?v) (tma ?tma)))
 ;      (advbl-needed -) (complex +) (result-present +) (GAP ?gap)
       (SUBJ (% NP (Var ?npvar) (sem ?sem) (agr ?agr) (lex ?lex) (case ?case)))

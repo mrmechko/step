@@ -36,12 +36,13 @@
 	 passive passive-map template result) 
     (s vform var neg sem subjvar dobjvar cont  lex orig-lex headcat transform ellipsis)
     (cp vform var neg sem subjvar dobjvar cont  transform subj-map subj lex orig-lex comp3) ;comp3 for -DEFN-PASSIVE-GAP>
-    (v lex orig-lex sem lf neg var agr cont aux modal auxname ellipsis tma transform headcat)
+    (v lex orig-lex sem lf neg var agr cont aux modal auxname ellipsis tma transform headcat result)
     (aux vform var agr neg sem subj iobj dobj comp3 part cont  tense-pro lex orig-lex headcat transform subj-map advbl-needed
 	 passive passive-map ellipsis contraction auxname) 
     ;; (pp var)
     ;; (pps var)
-    (utt neg qtype sem subjvar dobjvar cont lex orig-lex headcat transform)
+    (utt neg qtype ;; sem
+     subjvar dobjvar cont lex orig-lex headcat transform)
     (pred qtype focus gap filled transform headcat lex orig-lex)
     )
    
@@ -128,7 +129,7 @@
      (lf (% ?s (var ?sv) (class ?cl) (constraint ?constraint)))
      )
    -utt-punctuation>
-   (head (utt (focus ?foc) (ended -) (var ?v) ;(punc -) ; sa-seq has punc, but now this rule would allow consecutive puncs, e.g., I ate the pizza.?
+   (head (utt (focus ?foc) (ended -) (var ?v) ;(punc -) ; sa-seq has punc, but now this rule would allow consecutive puncs, e.g., I ate the pizza!!
 	      (uttword ?uw)
 	  (lf (% (? s speechact sa-seq) (var ?sv) (class ?cl) (constraint ?con)))
 	  ))
@@ -151,7 +152,7 @@
 		     (class (? cl ONT::SA_TELL ONT::SA_REQUEST ONT::SA_YN-QUESTION ONT::SA_WH-QUESTION)) ;(class ?cl) ; exclude simple NP conjunctions for example
 		     (constraint ?con)))
 	  ))
-   (punc (punctype ?p) (lex (? lex w::punc-exclamation-mark w::punc-period w::punc-question-mark w::punc-colon w::ellipses w::punc-comma w::punc-minus)))
+   (punc (punctype ?p) (lex (? lex w::punc-exclamation-mark w::punc-period w::punc-question-mark w::punc-colon w::ellipses w::punc-comma w::punc-minus w::punc-semicolon)))
    (utt (focus ?foc2) (ended -) (var ?v2) (punc -) (uttword ?uw1)
 	(lf (% speechact (var ?v2)
 	       (class (? cl1 ONT::SA_TELL ONT::SA_REQUEST ONT::SA_YN-QUESTION ONT::SA_WH-QUESTION)) ;(class ?cl1)
@@ -174,7 +175,7 @@
 	      (lf (% sa-seq (var ?v1) (class ?cl) (constraint ?con)))
 	      (acts ?acts)
 	  ))
-   (punc (punctype ?p) (lex (? lex w::punc-exclamation-mark w::punc-period w::punc-question-mark w::punc-colon w::ellipses w::punc-comma w::punc-minus)))
+   (punc (punctype ?p) (lex (? lex w::punc-exclamation-mark w::punc-period w::punc-question-mark w::punc-colon w::ellipses w::punc-comma w::punc-minus w::punc-semicolon)))
    (utt (focus ?foc2) (ended -) (var ?v2) (punc -) (uttword ?uw1)
 	(lf (% speechact (var ?v2)
 	       (class (? cl1 ONT::SA_TELL ONT::SA_REQUEST ONT::SA_YN-QUESTION ONT::SA_WH-QUESTION)) ;(class ?cl1)
@@ -183,7 +184,7 @@
     ;; (add-to-conjunct (val (punctype ?p)) (old ?con) (new ?constraint))
     (add-to-end-of-list (list ?acts) (val ?v2) (newlist ?newacts))
     )
-   
+
    ; replacing s-conj2
    ; two utts, possibly with different stypes, e.g., 
    ;; stype can also be whq: "... and what did the dog chase?" (cf. "what chased the cat" can be decl)
@@ -811,12 +812,13 @@
    
    ;; test: the city in which i live
    ;; fixme:: the argsem isn't being propagated for (wh r) adverbials. so 
-   ((cp (ctype relc) (arg ?srole) (argsem ?srolesem) (gap -)
+   ((cp (ctype relc) (arg ?srole) (argsem ?argsem) (gap -)
+     ;;(argsem ?srolesem) (gap -)
      (lf ?newlf) (agr ?newagr)
      ;; (lex ?l) (headcat ?vcomp) ;; non-aug-trips settings
      (lex ?hlex) (headcat ?hcat) ;; aug-trips
      )
-    -rel4> .92
+    -rel4> .98 ;;.92
     ;; fixme -- this is really hacked to transfer the role from the wh pronoun to the np it will eventually modify
     ;; wh r should only come out of advbl-binary-relative
     (advbl-r (atype pre) (argument (% s (sem ?argsem))) 
@@ -825,7 +827,8 @@
      (subcatsem ?srolesem)
      (arg2 ?srole)
      )
-    (head (s (var ?v) (lf ?lf) (lf (% prop (constraint ?con))) (sem ?argsem) (aux -)
+    (head (s (var ?v) (lf ?lf) (lf (% prop (constraint ?con))) (sem ?subcatsem) (aux -)
+	     ;;(sem ?argsem) (aux -)
 	      (adj-s-prepost -)
 	    (tma ?tma) (stype (? stp decl imp how-about))
 	   (wh -) (stype decl) (vform fin) (preadvbl -) (lex ?hlex) (headcat ?hcat)
@@ -1365,7 +1368,7 @@
 	    ;; (subj (? subj (% ?s1 (var ?subjvar))))
 	    (subj ?subj) (subj (% ?s1 (lex ?subjlex) (agr ?subjagr) (var ?subjvar) (sem ?subjsem) (gap -))) ;; note double matching required
 	    ;;(iobj ?iobj) (iobj (% ?s2  (case (? icase obj -)) (var ?iobjvar) (sem ?iobjsem) (gap -)))
-	    (part (% -)) 
+	    (part (% -))
 	    (dobj ?dobj) (dobj (% np (agr ?dobjagr) (case (? dcase obj -)) (var ?dobjvar) (sem ?dobjsem) (gap ?gap) (sort pred)
 				  (gerund -)))	    
 	            ;; we allow a possible gap in the dobj np e.g., "what did he thwart the passage of"
@@ -2659,8 +2662,12 @@
 	     (advbl-needed ?avn)
 	     ))
     (advbl (atype post) (gap -)  ; post: Is the block red eventually?
-     (sem ($ f::abstr-obj (F::type (? ttt ont::property-val ont::position-reln ont::predicate)))) ; property-val: "regular" adverbs; position-reln: in; predicate: if, eventually
+	   (sem ($ f::abstr-obj (F::type (? ttt ont::property-val
+					    ont::pos-wrt-containment-reln ont::position-as-point-reln ; in/on/at
+					    ;ont::position-reln ; commenting this out, but it is needed for, e.g., "Move it forward/in"
+					    ont::predicate)))) ; property-val: "regular" adverbs; position-reln: in; predicate: if, eventually
      (argument (% s (sem ?sem)))
+     (result-only -)
      (arg ?v) (var ?mod) (role ?advrole) (subcat -))
     (add-to-conjunct (val (mod ?mod)) (old ?con) (new ?newcon))
     )
@@ -3129,7 +3136,7 @@
  '((headfeatures
     (vp vform agr comp3 cont postadvbl  aux modal lex orig-lex headcat tma transform subj-map advbl-needed template)
     (s vform var neg sem subjvar dobjvar comp3 cont  lex orig-lex headcat transform subj advbl-needed)
-    (utt sem subjvar dobjvar cont lex orig-lex headcat transform))
+    (utt subjvar dobjvar cont lex orig-lex headcat transform)) ; took out sem
    
      ;;   basic commands
     

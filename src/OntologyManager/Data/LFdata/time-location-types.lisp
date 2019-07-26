@@ -49,6 +49,13 @@
 				       )))
     )
 
+(define-type ont::loc-where-rel
+    :comment "A subclass of AT-LOC for relative clause relations, e.g., a place where it never rains"
+    :parent ont::position-as-point-reln
+    ::arguments ((:ESSENTIAL ONT::FIGURE ((? xx f::phys-obj f::abstr-obj)  (f::tangible +)
+						      (f::type (? tt ont::location ont::mental-construction)))))
+    )
+ 
 ; figure is viewed as a point and related to ground by (abstract) containment
 (define-type ont::pos-wrt-containment-reln
     :comment "locating an object (typically the FIGURE) within an extended object (typically the GROUND)"
@@ -62,6 +69,13 @@
   :arguments ((:ESSENTIAL ONT::GROUND ((? val f::phys-obj f::abstr-obj) ; measure (music)
 				       (f::intentional -) (f::container +) ; containers include corner and pathway
 				       )))
+  )
+
+(define-type ont::in-loc-rel
+    :parent ont::in-loc
+    :comment "FIGURE is part of the GROUND"
+  :arguments ((:ESSENTIAL ONT::FIGURE (f::abstr-obj (f::tangible +)
+						      (f::type ont::mental-construction))))
   )
 
 (define-type ont::contain-reln
@@ -231,7 +245,8 @@
 (define-type ont::orients-to
     :parent ont::oriented-loc-reln
     :comment "FIGURE is located by an object defined by an orientation wrt an object. e.g., to the east, to the back"
-  :arguments ((:essential ONT::GROUND ((? of1  f::phys-obj f::abstr-obj) (f::type (? t ONT::CARDINAL-POINT ONT::object-dependent-location)))))
+    :arguments ((:essential ONT::FIGURE (f::PHYS-OBJ) (F::spatial-abstraction (? spa F::line F::strip)))
+		(:essential ONT::GROUND ((? of1  f::phys-obj f::abstr-obj) (f::type (? t ONT::CARDINAL-POINT ONT::object-dependent-location)))))
   )
 
 ; figure is on an object
@@ -523,7 +538,7 @@
 			   )))
     )
 
-; relates a trajectory/evet to its beginning/source
+; relates a trajectory/change event to its beginning/source/initial state
 (define-type ont::source-reln
  :parent ont::path
  )
@@ -532,15 +547,18 @@
 ; from
 
 (define-type ont::from
-  :parent ont::source-reln
-  )
+    :comment "This is the initial state of a change - not an initial location, which is FROM-LOC"
+    :parent ont::source-reln
+    )
+
 
 (define-type ont::source-as-loc
+    :comment "a relation that indicates where an object was in the past: the person from Italy"
  :parent ont::from
- :arguments ((:ESSENTIAL ONT::FIGURE (F::phys-obj))
+ :arguments ((:ESSENTIAL ONT::FIGURE (F::phys-obj (F::mobility F::movable)))
 	     (:ESSENTIAL ONT::GROUND (F::phys-obj
-				      (F::mobility F::movable)) ; exclude "... arrive in country X from country Y"
-				      ))
+				      ;;(F::mobility F::movable)) ; exclude "... arrive in country X from country Y"   Can't do this as it also eliminates the usual cases, doesn't it?  JFA 7/19
+				      )))
  )
 
 #| ; now this is :RESULT
@@ -617,15 +635,15 @@
  )||#
 
 (define-type ONT::from-loc
- :parent ONT::source-reln
+    :parent ONT::source-reln
+    :comment "This indicates an initial location of an object"
  :arguments (;(:ESSENTIAL ONT::FIGURE ( F::situation (F::type ont::motion)))
 	     ;(:ESSENTIAL ONT::GROUND (F::Phys-obj (f::spatial-abstraction (? sa f::spatial-point))))
 
 	     ; copied from to-loc
-	     (:ESSENTIAL ONT::FIGURE ((? f F::PHYS-OBJ F::abstr-obj))); (F::situation (f::type ont::event-of-change)))   ; "I walked to the store" FIGURE should point to "I", not "walked"
+	     (:ESSENTIAL ONT::FIGURE ((? f F::PHYS-OBJ F::abstr-obj F::situation)))    ;; need to allow situation here as it can modoify events as well as objects in RESULT expressions
 	     (:ESSENTIAL ONT::GROUND ((? t F::Phys-obj F::abstr-obj) (f::spatial-abstraction ?!sa)
-				      (F::mobility F::movable) ; exclude "... arrive in country X from country Y"
-					;(F::form F::geographical-object)
+				     ;; (F::mobility F::movable) ; exclude "... arrive in country X from country Y"  JFA I removed the movable constraint to the figure 
 				      ) )  ; spatial-abstraction is not enough: many things have spatial-abstraction, e.g., a frog.  Another possibility is (F::object-function F::spatial-object)
 
 	     )
@@ -634,31 +652,20 @@
 ; I moved from the chair to the sofa.  not geographic-object (gound)
 ; transmit the signal: signal is abstr-obj (figure)
 (define-type ONT::to-loc
-    :comment "the generic goal role: might be a physical object (as possessor) or a resulting state"
+    :comment "the ending location of an object undergoing motion"
  :parent ONT::goal-reln
- :arguments (;(:ESSENTIAL ONT::OF (F::situation (f::type ont::event-of-change)))
-	     ;(:ESSENTIAL ONT::VAL ((? t F::Phys-obj F::abstr-obj)))
-	     (:ESSENTIAL ONT::FIGURE ((? f F::PHYS-OBJ F::abstr-obj))); (F::situation (f::type ont::event-of-change)))   ; "I walked to the store" FIGURE should point to "I", not "walked"
+ :arguments ((:ESSENTIAL ONT::FIGURE ((? f F::PHYS-OBJ F::abstr-obj) (F::mobility F::movable) ))
 	     (:ESSENTIAL ONT::GROUND ((? t F::Phys-obj F::abstr-obj) (f::spatial-abstraction ?!sa)
 					;(F::form F::geographical-object)
 				      ) )  ; spatial-abstraction is not enough: many things have spatial-abstraction, e.g., a frog.  Another possibility is (F::object-function F::spatial-object)
 	     )
  )
 
-;; 4 2010 -- no longer needed?
-;; pan camera to 45 degrees
-;(define-type ONT::to-loc-degrees
-; :parent ONT::predicate
-; :arguments ((:ESSENTIAL ONT::OF (F::Situation (F::trajectory +)))
-;             (:ESSENTIAL ONT::VAL (F::Abstr-obj (f::measure-function f::value)))
-;             )
-; )
-
-;; for to-phrases that modify vehicles, e.g. the plane to rochester
+;; for to-phrases that modify trajectory related nouns, e.g., paths, and vehicles, e.g. the plane to rochester
 (define-type ONT::destination-loc
  :parent ONT::predicate
  :arguments ((:ESSENTIAL ONT::GROUND (F::Phys-obj (f::spatial-abstraction (? sa f::spatial-point))))
-	     (:ESSENTIAL ont::FIGURE  (f::phys-obj (F::Object-Function F::vehicle) (F::MOBILITY F::Self-moving) (F::container +)))
+	     (:ESSENTIAL ont::FIGURE  (f::phys-obj (f::trajectory +))) ;;(F::Object-Function F::vehicle) (F::MOBILITY F::Self-moving) (F::container +)))
 	     )
  )
 
@@ -844,7 +851,7 @@
 ;; the delayed cargo, a scheduled meeting
 (define-type ONT::scheduled-time-modifier
  :parent ONT::TEMPORAL-MODIFIER
- :arguments ((:ESSENTIAL ONT::FIGURE ((? of f::phys-obj f::situation)))
+ :arguments ((:ESSENTIAL ONT::FIGURE ((? of f::phys-obj f::situation f::time)))
              )
  )
 
@@ -1048,7 +1055,7 @@
  )
 
 (define-type ONT::now
-     :wordnet-sense-keys ("now%4:02:05" "presently%4:02:00" "current%3:00:00" "present%3:00:01")
+     :wordnet-sense-keys ("now%4:02:05" "presently%4:02:00" "present%3:00:01")
      :parent ONT::event-time-wrt-now
      )
 
