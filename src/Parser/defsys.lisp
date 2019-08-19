@@ -19,6 +19,9 @@
 (unless (find-package :logging)
   (load #!TRIPS"src;Logging;defsys"))
 
+(unless (find-package :dbg)
+  (load #!TRIPS"src;dbg;defsys"))
+
 (unless (find-package :util)
   (load #!TRIPS"src;util;defsys"))
 
@@ -30,6 +33,7 @@
 
 (unless (find-package :parser)
   (load #!TRIPS"src;Parser;parser-pkg"))
+
 
 (in-package :parser)
 
@@ -64,7 +68,7 @@
 		 "FeatureHandling"
 		 "probability"
 		 "GrammarandLexicon"
-     "skeletons"
+                 "skeletons"
 		 "Chart"
 		 "onlineParser"
 		 "attachment"
@@ -88,7 +92,7 @@
 (dfc:defcomponent :parser
     ;; From parser-pkg.lisp
     :use (:common-lisp :util :ontologymanager :lexiconmanager :w)
-    :system (:depends-on (:comm :logging :util
+    :system (:depends-on (:dbg :comm :logging :util
 				:om :lxm
 				:core-parser :trips-parser)))
 

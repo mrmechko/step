@@ -118,8 +118,9 @@
   ;; Do different stuff, depending on which Parse command is 
   ;; being given.
   
+  (clear-skeleton-map)
   (case (car content)
-
+    ; empty *semantic-skeleton-map*
     ;; new word(s)
     ;; do the lexical lookup
     (word

@@ -1,10 +1,52 @@
 (in-package "PARSER")
 
+(defvar +dbg-general+ (dbg::sk-tag-list 'default 'misc))
+(defvar +dbg-wsd+ (dbg::sk-tag-list 'wsd-lookup 'wsd-check 'spans))
+(defvar +dbg-cache+ (dbg::sk-tag-list 'set-map 'clear-map 'semantic-skeleton-cache))
+(defvar +dbg-skeleton-score+ (dbg::sk-tag-list 'build-skeletons))
+(defvar +dbg-misc+ (dbg::sk-tag-list 'misc))
+
+(defvar +all-rik+ (dbg::sk-tag-list
+		    +dbg-general+
+		    +dbg-misc+
+		    +dbg-cache+ 
+		    ;+dbg-wsd+ 
+		    ;+dbg-skeleton-score+ 
+		    ))
+
+(defvar *skel-dbg* (dbg::make-sk-debugger +all-rik+))
+(format t "~A" *skel-dbg*)
+
+(defun skdbg (tags msg &rest args) (apply #'dbg::sk-debug `(,*skel-dbg* ,tags ,msg ,@args)))
+
+
 (defvar *semantic-skeleton-scoring-enabled* nil)
 (defvar *semantic-skeleton-map* nil)
+(defvar *semantic-skeleton-map-filled* nil)
 (defvar *var-type-map* nil) ; cache
 (defvar *semantic-skeleton-score-factor* .1)
-(defvar *essential-roles* '(ont::agent ont::agent1 ont::affected ont::affected1 ont::neutral ont::neutral1 ont::formal ont::result ont::affected-result ont::of ont::val ont::figure ont::ground ont::experiencer ont::source ont::transient-result))
+(defvar *essential-roles* 
+  '(ont::agent ont::agent1 
+    ont::affected ont::affected1 
+    ont::neutral ont::neutral1 
+    ont::formal 
+    ont::result ont::affected-result ont::transient-result
+    ont::of ont::val 
+    ont::figure ont::ground 
+    ont::experiencer 
+    ont::source))
+
+(defun clear-skeleton-map ()
+    (skdbg 'clear-map "clearing skeleton map")
+    (setf *semantic-skeleton-map* nil)
+    (setf *semantic-skeleton-map-filled* nil)
+)
+
+(defun set-skeleton-map (content) 
+	(skdbg 'set-map "setting skeleton map to ~S" content)
+	(setf *semantic-skeleton-map* content)
+	(setf *semantic-skeleton-map-filled* t)
+)
 
 ;; set this variable to a set of scored skeleton debugging
 (defvar *debug-skeleton-info* 
@@ -23,13 +65,32 @@
 
 ; compute-skeleton
 ;   given a constituent, does a bunch of stuff, returns a skel-typle
+
 (defun adjust-prob-based-on-skeleton-score (prob skel)
   (if (null skel)
       prob
       (let ((score (cadr skel)))
 	(if (not (numberp score)) (setq score 1))
-	(trace-msg 3 "~%adjusting PROB by ~S" score)
+	(skdbg +dbg-skeleton-score+ "adjusting PROB by ~S" score)
 	(* prob score))))
+
+(defun point-in-span (p s2)
+	(and (>= p (first s2)) (<= p (second s2)))
+)
+
+(defun span-overlap (s1 s2)
+	(progn
+		(skdbg 'spans "span check: ~S overlaps ~S" s1 s2)
+		(or 
+			(or (point-in-span (first s1) s2) (point-in-span (second s1) s2))
+			(or (point-in-span (first s2) s1) (point-in-span (second s2) s1))
+		)
+	)
+)
+
+(defun constit-span (c1) (list (wconstit-start c1) (wconstit-end c1)))
+
+(defun constit-overlap (c1 c2) (span-overlap (constit-span c1) (constit-span c2)))
 
 (defstruct wconstit id class (word nil) (syncat nil) (start -1) (end -1))
 (defstruct wquery info (roles nil))
@@ -81,7 +142,7 @@
 )
 
 (defun get-simple-type (x)
-	(format t "~%Getting simple type from: ~S" x)
+	(skdbg 'build-skeletons "~%Getting simple type from: ~S" x)
   (let ((type (if (consp x) (cadr x) x)))
     (if (symbolp type)
 	type
@@ -92,8 +153,8 @@
       (let* ((lf (get-fvalue (constit-feats constit) 'w::lf)) ; get feature value of w::lf from  constit-feats
 	     (complete-class (get-value lf 'w::class)) ; get the complete-class name
 	     (class (if (consp complete-class) (second complete-class) complete-class)) ; if class is consd, take the second item
-	     (xxx (if (member class '(ont::and ont::sequence)) ; if class is one of these things
-		      (trace-msg 2 "~%~% FOUND SEQUENCE from constit ~S" constit)))
+	     ;(xxx (if (member class '(ont::and ont::sequence)) ; if class is one of these things
+	     ;	      (skdbg 'build-skeletons "FOUND SEQUENCE from constit ~S" constit)))
 	     (var (get-value lf 'w::var))
 	     (constraint (if lf (get-value lf 'w::constraint)))
 	     (role-pairs (if (and constraint (not (eq constraint '-))
@@ -108,59 +169,71 @@
 					      x)))
 			       (remove-if-not #'(lambda (x) (member (car x) *essential-roles*))
 				   role-pairs)))
-	      ;;(xxy (format t "~% cleaned up pairs are ~S" roles))
 	     (skel (build-semantic-skeleton var complete-class (if found-bound-role roles) ;; only pass in roles if there is at least one bound value
 					    (constit-cat constit) start end)))
 	     
-	     ;;(if roles (format t "~% sleeton map is ~S" *semantic-skeleton-map*))
+	     (skdbg 'semantic-skeleton-cache-verbose "skeleton map is ~S" *semantic-skeleton-map*)
 	     skel)))
 
 (defun wsd-check (root roles)
-  (let* 
-    ((reply (send-and-wait `(REQUEST :content (WSD-CHECK :root ,root :roles ,roles))))
+  (let* ((reply (send-and-wait `(REQUEST :content (WSD-CHECK :root ,root :roles ,roles))))
 	 (score (car (or (find-arg reply :score) (find-arg-in-act reply :score)))))
-		   (format t "~%Recieved a score of ~S" score)
+		   (skdbg 'wsd-check "~%Recieved a score of ~S" score)
+		   (convert-to-adjustment-factor score)
 ))
+
+(defun test-element (e1 e2)
+  ;; TODO: how do you match ont name
+  (skdbg 'build-skeletons "testing...")
+  (skdbg 'build-skeletons "comparing ~S against ~S" e1 e2)
+  (and (span-overlap (car (last e1)) (car (last e2))) (equalp (string (first e1)) (string (first e2))))
+)
+
+(defun check-wsd-map (cls lex span &optional (against *semantic-skeleton-map*))
+  ;; Checks to see if the (cls lex span) triple matches something we've already seen.
+  (skdbg 'build-skeletons "looking for: ~S ~S ~S" cls lex span)
+  (skdbg 'build-skeletons "in: ~S" against)
+  (skdbg 'build-skeletons "in: ~S" against)
+  (if against 
+    (or 
+       (test-element (list cls lex span) (car against)) 
+       (check-wsd-map cls lex span (cdr against)))
+    nil
+    )
+)
+
+
+(defun get-wsd-data ()
+  ;; Gets data from SkeletonScore python module if the list is empty
+  ;; Should add a guard that gets replaced at reset
+  (skdbg 'semantic-skelton-cache "semantic-skeleton-map filled: ~S" *semantic-skeleton-map-filled*)
+  (if (not *semantic-skeleton-map-filled*) 
+    (let* (
+	   (reply (send-and-wait `(REQUEST :content (get-wsd-data)))))
+      (skdbg 'semantic-skeleton-cache "recieved reply ~S" reply)
+      (set-skeleton-map (cdr reply))
+)))
+
 
 (defun build-semantic-skeleton (id class roles syncat start end)
   ;; this builds the skeleton and adds to skeleton-map and the var-map if necessary"
-  (let (
-	  (word (if (consp class) (caddr class))) ;; get word and class (syncat provided)
+  (get-wsd-data)
+  ;; This should probably all get replaced?
+  (let* (
+	  (word (if (consp class) (caddr class) '())) ;; get word and class (syncat provided)
 	  (rolemap (mapcar 'unpack-role roles))
+    	  (cls (if (consp class) (cadr class) class))
 	) 
-	;(format t "~%Roles: ~S" rolemap)
-    (setq class (if (consp class) (cadr class) class))
-	(setq thisskel (make-wconstit :id id :class class :word word :syncat syncat :start start :end end))
-    (wsd-check (format-wconstit thisskel) (format-key-pair rolemap))
-
-  (if (not (assoc id *var-type-map*)) ; if id is not already in the map, put it there
-    	(push (list id thisskel) *var-type-map*))
-	(list thisskel 1)))
-
-  	;(let* (
-	;	(skeleton (list* class (unpack-roles roles)))
-	;	(cached-skeleton (assoc skeleton *semantic-skeleton-map* :test #'equalp)) ; changed to equalp for when I uncomment this
-	;)
-    ;; the following is for debugging - it provides a quick way to generate a chache from sentences
-    ;(if (and *generate-skeletons* (not cached-skeleton) (> (list-length skeleton) 1))
-	;	(push (list skeleton 1) *semantic-skeleton-map*))
-	;;(if cached-skeleton (format t "~%found cached info: ~S:" cached-skeleton))
-	;; if no cache, get the new value and record it in the cache
-    ;(or cached-skeleton
-	;; a single atom with no roles gets a score of 1
-	;	(if (and (consp skeleton) (eq (list-length skeleton) 1))
-	;    	(list skeleton 1))
-	;	(let ((res (evaluate-skeleton skeleton syncat)))
-	;		(push res *semantic-skeleton-map*)
-	;	res)))))
-    
-
-;; (defun evaluate-skeleton (skel syncat)
-;;   (let* ((reply (send-and-wait `(REQUEST :content (EVALUATE-SKELETON ,skel :syncat ,syncat))))
-;; 	 (score (car (or (find-arg reply :score) (find-arg-in-act reply :score)))))
-;;     (list skel (if (numberp score)
-;; 		   (convert-to-adjustment-factor score)
-;; 		   1))))
+	(skdbg 'build-skeletons "Roles: ~S" rolemap)
+	(skdbg 'build-skeletons "class ~S" class)
+	(skdbg 'build-skeletons "word ~S" word)
+	(skdbg 'build-skeletons "cls ~S" cls)
+	(skdbg 'build-skeletons "start: ~S, end ~S. span ~S" start end (list start end))
+	(if (check-wsd-map cls word (list start end))
+	  (list (list cls word) 1)
+	  nil
+	  )
+))
 
 (defvar *max-semantic-skeleton-factor* 1.05)
 (defvar *min-semantic-skeleton-factor* .95)
@@ -177,20 +250,3 @@
 		)
 	)
 )
-;; (defun unpack-roles (roles)
-;;   (when roles
-;;     (let 
-;; 		((rolename (keywordify (caar roles))))
-;;       	(multiple-value-bind
-;; 			(type word)
-;; 			(lookup-ont-type-from-skeleton-map (cadar roles)) ; assumes that anything here has been seen already...
-;; 			(multiple-value-bind 
-;; 	    		(rest-types rest-words)
-;; 	    		(unpack-roles (cdr roles))
-;; 	    		(values (list* rolename
-;; 			 				type
-;; 			 				rest-types)
-;; 		    			(list* rolename
-;; 			 				word
-;; 			 				rest-words))))))
-;)

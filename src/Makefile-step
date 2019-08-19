@@ -13,12 +13,13 @@ LISP_MODULES = \
 	util \
 	Comm \
 	Logging \
+	dbg\
 	OntologyManager \
 	LexiconManager \
 	Parser \
 	SimpleKB \
 	IM \
-	ChannelKB
+	ChannelKB\
 
 # requires an extra download, and we don't really use it anymore
 #	LFEvaluator
