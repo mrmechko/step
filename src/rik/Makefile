@@ -5,9 +5,9 @@
 # $Id: Makefile,v 1.1.1.1 2005/01/14 19:48:08 ferguson Exp $
 #
 
-NAME = dbg
+NAME = rik
 DEFSYS = defsys.lisp
-SYSTEM = :dbg
+SYSTEM = :rik
 
 CONFIGDIR=../config
 include $(CONFIGDIR)/lisp/lib.mk

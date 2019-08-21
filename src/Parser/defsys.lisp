@@ -19,8 +19,8 @@
 (unless (find-package :logging)
   (load #!TRIPS"src;Logging;defsys"))
 
-(unless (find-package :dbg)
-  (load #!TRIPS"src;dbg;defsys"))
+(unless (find-package :rik)
+  (load #!TRIPS"src;rik;defsys"))
 
 (unless (find-package :util)
   (load #!TRIPS"src;util;defsys"))
@@ -92,7 +92,7 @@
 (dfc:defcomponent :parser
     ;; From parser-pkg.lisp
     :use (:common-lisp :util :ontologymanager :lexiconmanager :w)
-    :system (:depends-on (:dbg :comm :logging :util
+    :system (:depends-on (:rik :comm :logging :util
 				:om :lxm
 				:core-parser :trips-parser)))
 

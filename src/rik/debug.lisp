@@ -1,4 +1,4 @@
-(in-package "DBG")
+(in-package :RIK)
 ;; sk-tag can be either an explicit sk-tag-struct, a symbol, or a tuple with ('symbol level)
 
 (defgeneric flatten (lst))
@@ -8,6 +8,8 @@
 (defgeneric sk-tag (tag &optional level) (:documentation "takes an sk-tag-struct, symbol, or '(symbol int) and returns an sk-tag-struct"))
 (defgeneric sk-tag-allowed (reference query) (:documentation "determines if the reference allows a query tag/tag-set through"))
 (defgeneric sk-debug-tags (dbg) (:documentation "return the list of tags being tracked by this debugger"))
+
+(defgeneric sk-debug (dbg tag msg &rest values) (:documentation "print a debug message if any of tags are valid in dbg"))
 
 ; alteration
 (defgeneric sk-alter (dbg tag model) (:documentation "don't call directly.  Generically set or unset tags"))
@@ -37,7 +39,7 @@
 )
 
 (defstruct (sk-debug-system
-	     (:constructor make-sk-debugger (&optional (tags (sk-tag-list 'misc 'default)) (verbose t)))
+	     (:constructor make-sk-debugger (&optional (tags (sk-tag-list 'misc 'default)) (output-stream t) (verbose t)))
 	     (:predicate sk-debugger-p)
 	     (:print-function
 	       (lambda (p s k)
@@ -64,6 +66,8 @@
   )
 )
 
+(defun list-of-sk-tag-shape-p (tags) (every #'sk-tag-shape-p tags))
+
 ; constructors etc for sk-tag-struct
 (defun make-sk-tag (name &optional (level 0)) 
   "check the cache and then return the tag"
@@ -77,11 +81,26 @@
   )
 )
 
+;(defun sk-tag-list (&rest l)
+;  (cond
+;	((null l) '())
+;	((sk-tag-shape-p l) (sk-tag l))
+;	((listp l) (append (sk-tag-list (car l)) (sk-tag-list (cdr l))))
+;	(t '())
+;    )
+;  )
+
 (defun sk-tag-list (&rest l) 
   "ensure a list is a list of sk-tags"
   (cond 
+       ((null l) (make-sk-tag 'all -1))
        ((sk-tag-shape-p l) (list (sk-tag l)))
-       ((every #'sk-tag-shape-p (flatten l)) (map 'list #'sk-tag (flatten l)))
+       ((and (listp l) (list-of-sk-tag-shape-p l)) (map 'list #'sk-tag l))
+       ((and 
+	  (listp l) 
+	  (listp (car l)) 
+	  (list-of-sk-tag-shape-p (car l))) 
+	(map 'list #'sk-tag (car l)))
        (t (list (make-sk-tag 'all -1)))
 ))
 
@@ -232,6 +251,7 @@
   (sk-alter dbg tag 'unset)
 )
 
+(defmethod sk-debug ((dbg null) tag msg &rest values) nil)
 (defmethod sk-debug ((dbg sk-debug-system) tag msg &rest values)
   "if a tag is provided print the message if the tag is in or a subset of dbg.  if tag is nil, print the message always"
   (let* (

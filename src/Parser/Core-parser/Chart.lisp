@@ -458,12 +458,12 @@ separate instances of the chart/parser.")
 ;;  constit start end rhs name rule-id prob)
 
 (defun build-entry (constit start end rhs rule-id prob prob-aux first-cat)
-  ;;(format t "~%Building entry from rule ~S from ~S to ~S" rule-id start end)
-  (let ((skeleton (if  *semantic-skeleton-scoring-enabled*
+  (let ((name (gen-reusable-symbol (if (symbolp (constit-cat constit)) (constit-cat constit))))
+	(skeleton (if  *semantic-skeleton-scoring-enabled*
 		       (compute-skeleton constit start end))))
     (make-entry :constit constit
 		:start start :end end :rhs rhs 
-		:name  (gen-reusable-symbol (if (symbolp (constit-cat constit)) (constit-cat constit)))
+		:name name 
 		:rule-id rule-id 
 		:prob (adjust-prob-based-on-skeleton-score prob skeleton)
 		:prob-aux prob-aux 

@@ -31,7 +31,7 @@
 	((setf (parser::flexible-semantic-matching parser::*chart*) t))  ;;  selection preferences rather than restrictions
 	((setf (parser::number-parses-desired parser::*chart*) 4))  ;; get # interpretations before stopping
 	(parser::*include-parse-tree-in-messages* '(w::lex)) ;; required for WebParser
-	(parser::*semantic-skeleton-scoring-enabled* nil) ; disable semantic scoring
+	(parser::*semantic-skeleton-scoring-enabled* t) ; disable semantic scoring
 	((parser::customize-cost-table '((ont::SA_QUERY 1.2) (ont::SA_IDENTIFY 1.8) (ont::SA_pred-fragment 2) 
 					 (ont::SA_request 1.2) (ont::SA_YN-QUESTION 1.2)
 					 (ont::SA_CONFIRM 1.3) (ont::SA_WH-QUESTION 1.2) (ont::SA_TELL 1)(w::CP 2) (w::VP 2) 

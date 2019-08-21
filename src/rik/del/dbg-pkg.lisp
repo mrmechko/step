@@ -9,21 +9,4 @@
   (load (make-pathname :directory '(:relative :up "config" "lisp")
 		       :name "trips")))
 
-(defpackage :dbg
-  (:use common-lisp)
-  (:export 
-    sk-set 
-    sk-unset
-    sk-tag
-    sk-tag-list
-    make-sk-debugger
-    sk-debug
-))
 
-(in-package :dbg)
-
-
-(mk:defsystem :dbg
-  :source-pathname #!TRIPS"src;dbg;"
-  :components ((:file "debug"))
-)

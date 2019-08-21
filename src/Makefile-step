@@ -13,7 +13,7 @@ LISP_MODULES = \
 	util \
 	Comm \
 	Logging \
-	dbg\
+	rik\
 	OntologyManager \
 	LexiconManager \
 	Parser \
@@ -44,11 +44,8 @@ OTHER_PROGRAMS = \
 	TextPP \
 	TextTagger \
 	Graphviz \
-	SkeletonScore \
-	Tools
-
-# Rik says SkeletonScore no longer needs this, and the domain expired
-#	Diesel \
+	Tools \
+	SkeletonScore
 
 include Makefile-common
 
