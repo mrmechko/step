@@ -14,6 +14,7 @@ include $(CONFIGDIR)/python/prog.mk
 
 all:: .git
 	git pull origin mini
+	git checkout -b mini
 	$(PIP) install --user -r requirements.txt
 
 distclean:: clean
