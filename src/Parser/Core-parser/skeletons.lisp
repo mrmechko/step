@@ -1,6 +1,8 @@
 (in-package "PARSER")
 
-(format *error-output* "Skeletons!~%")
+(defvar *dbg-output-stream* *error-output*)
+
+(format *dbg-output-stream* "Skeletons!~%")
 
 (defvar +dbg-general+ (rik::sk-tag-list 'default 'misc))
 (defvar +dbg-params+ nil)
@@ -37,8 +39,8 @@
 	;'get-simple-type
 	;'test-element ; 1
 	'(test-element 1)
-	;'check-wsd-map
-	'(check-wsd-map 1)
+	;'query-lex-advice
+	'(query-lex-advice 1)
 	'get-wsd-data
 	'get-cached-score
 	'compute-skeleton-score
@@ -68,7 +70,7 @@
 (defun skdbg (tags msg &rest args) 
   "wraps debug configuration loading and the debugger itself"
   (if (not *skel-dbg*) 
-    (setf *skel-dbg* (rik::make-sk-debugger (def-or-config +dbg-params+) *error-output*))
+    (setf *skel-dbg* (rik::make-sk-debugger (def-or-config +dbg-params+) *dbg-output-stream*))
   )
   (apply #'rik::sk-debug `(,*skel-dbg* ,tags ,msg ,@args))
 )
@@ -145,13 +147,13 @@
 
 (defun adjust-prob-based-on-skeleton-score (prob skel)
   "take a probability and a skel entry (consisting of (info coefficient)) and adjust probability by coefficient"
-  (skdbg 'adjust-prob-based-on-skeleton-score "rq: adjust ~S by ~S..." prob skel)
+  (skdbg '(adjust-prob-based-on-skeleton-score 1) "rq: adjust ~S by ~S..." prob skel)
   (if (null skel)
       prob
       (let ((score (skel-range (second skel)))) ;
 	(if (and (second skel) (< 0 (second skel))) 
 	  (progn
-		(skdbg 'adjust-prob-based-on-skeleton-score "adjusting ~S by ~S" prob score)
+		(skdbg 'adjust-prob-based-on-skeleton-score "~S: adjusting ~S by ~S" (car skel) prob score)
 		(* prob score)    
 	    )
 	  prob ; skip the ones that aren't scored
@@ -275,6 +277,7 @@
 		  	  	(push (append (list (sstring var)) skel) *var-type-map*)
 			  )
 			)
+			(if skel (skdbg 'compute-skeleton "SKEL Result ~A" skel))
 			skel
 			)
 	     ))))
@@ -294,34 +297,48 @@
    )
   )
 
-(defun test-element (e1 e2)
+(defun test-element (candidate reference)
   ;; Need to check to see if a word isn't getting a wsd entry
   ;; if no entry is given, it should be removed from consideration
   (if *skeleton-wsd-hierarchy* 
-    (skdbg '(test-element 1) "comparing constit ~S - ~S using hierarchy" e1 e2)
-    (skdbg '(test-element 1) "comparing constit ~S - ~S" e1 e2)
+    (skdbg '(test-element 1) "comparing constit ~S - ~S using hierarchy" candidate reference)
+    (skdbg '(test-element 1) "comparing constit ~S - ~S" candidate reference)
   )
   (let (
 	(tps (if *skeleton-wsd-hierarchy* 
-	       (subtype-check-wrapped e1 e2)
-	       (equalp (first e1) (first e2)))) 
-    	(spns (span-overlap (car (last e1)) (car (last e2)))) 
-    	(word (equalp (first e1) (first e2)))
+	       (subtype-check-wrapped candidate reference)
+	       (equalp (first candidate) (first reference)))) 
+   	(word (equalp (second candidate) (second reference)))	
+	(spns (span-overlap (third candidate) (third reference))) 
     )
-    ;(if (and tps word spns) (skdbg '(test-element 1) "comparing ~S - ~S : ~S" e1 e2 (list tps word spns)))
+    (if (and tps word spns) (skdbg '(test-element 1) "comparing ~S - ~S : ~S" candidate reference (list tps word spns)))
     (and tps spns word)
     )
 )
 
-(defun check-wsd-map (cls lex span &optional (against *semantic-skeleton-map*))
+(defun max-or-null (a b) 
+(if (not (or a b)) nil
+	(let (
+		(ap (if a a b)) 
+		(bp (if b b a))) 
+		(max ap bp))
+))
+
+(defun query-lex-advice (cls lex span &optional (against *semantic-skeleton-map*) (advice :wsd))
   "Checks to see if the (cls lex span) triple matches something we've already seen."
   ;; ideally, could have a bunch of different word hints come in as a dictionary and this function could look them up by key
-  (skdbg '(check-wsd-map 1) "looking for: ~S ~S ~S" cls lex span)
-  (skdbg '(check-wsd-map 1) "in: ~S" against)
+  ;; TODO: Make this an argmax - Multiple advice entries might be present for the same span
+  (skdbg '(query-lex-advice 1) "looking for: ~S ~S ~S" cls lex span)
+  (skdbg '(query-lex-advice 1) "in: ~S" against)
   (if against 
-    (if (test-element (list (symbol-name cls) (symbol-name lex) span) (car against))
-       1 ;; NOTE: this should be returning the probability but it is returning a 1 for now
-       (check-wsd-map cls lex span (cdr against))
+    (max-or-null 
+      	(if (test-element (list (symbol-name cls) (symbol-name lex) span) (car against))
+		(progn 
+		     (skdbg 'query-lex-advice "WSD ADVICE: ~A" (get-keyword-arg (car against) advice)) ;; TODO: use 'advice' to extract the correct score
+	 	     (get-keyword-arg (car against) advice))
+		   nil
+	)
+	(query-lex-advice cls lex span (cdr against) advice) ;; we now recurse regardless because we need to find the argmax
     )
     nil
     )
@@ -351,7 +368,7 @@
 	) 
     	(skdbg '(build-semantic-skeleton 1) "Rolescores: ~S" rolescores)
 	 (if (member word (map 'list #'second *semantic-skeleton-map*) :test #'string=) 
-	  (let ((result (check-wsd-map cls word (list start end))))
+	  (let ((result (query-lex-advice cls word (list start end))))
 	    (if result
 		  (list (list cls word) (compute-skeleton-score (map 'list #'second rolescores) result)) ;; This 1 should be replaced with the raw score
 		  (list (list cls word) (compute-skeleton-score (map 'list #'second rolescores) 0)))
