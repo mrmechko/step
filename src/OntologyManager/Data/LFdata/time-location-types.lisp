@@ -1235,7 +1235,7 @@
 ;;  direct reference to times (e.g. now, then, ...)
 ;;  this type is also constructed by the grammar for dates, times of day, etc.
 (define-type ONT::TIME-LOC
-    :wordnet-sense-keys ("date%1:28:03")
+    :wordnet-sense-keys ("date%1:28:03" "hour%1:28:00")
     :parent ONT::time-object)
 
 (define-type ONT::recurring-time-of-day
@@ -1247,6 +1247,7 @@
 (define-type ONT::time-defined-by-event
     :comment "times defined by events"
     :sem (F::time (F::time-function F::day-point))
+    :wordnet-sense-keys ("quarter%1:28:01" "halftime%1:28:00")
     :parent ont::time-interval
     )
 

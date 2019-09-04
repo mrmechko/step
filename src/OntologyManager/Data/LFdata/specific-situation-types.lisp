@@ -1010,7 +1010,7 @@
  )
 
 (define-type ONT::PUSH
- :wordnet-sense-keys ("poke%2:35:01" "push%2:38:00" "force%2:38:00" "thrust%2:38:00" "thrust%2:42:01" "wedge%2:35:00" "bump%2:35:00")
+ :wordnet-sense-keys ("poke%2:35:01" "push%2:38:00" "force%2:38:00" "thrust%2:38:00" "thrust%2:42:01" "wedge%2:35:00" "bump%2:35:00" "boost%1:04:01")
   :parent ONT::apply-force
  )
 
@@ -2312,7 +2312,7 @@
  )
 
 (define-type ONT::praise
- :wordnet-sense-keys ("praise%2:32:00" "applase%1:10:00")
+ :wordnet-sense-keys ("praise%2:32:00" "applause%1:10:00")
  :parent ONT::loaded-claim
  :sem (F::Situation (F::Cause F::Agentive))
  :arguments (
@@ -2511,7 +2511,7 @@
  )
 
 (define-type ONT::TALK
- :wordnet-sense-keys ("posit%2:32:02" "put_forward%2:32:00" "state%2:32:01" "submit%2:32:00" "talk%2:32:01" )
+ :wordnet-sense-keys ("posit%2:32:02" "put_forward%2:32:00" "state%2:32:01" "submit%2:32:00" "talk%2:32:01" "talk%1:10:00")
  :parent ONT::conversing
  :comment "extended communicative interaction, FORMAL is the topic of discussion"
  :sem (F::Situation (F::Cause F::agentive) (F::Time-span F::extended))
@@ -2556,7 +2556,7 @@
     )
 
 (define-type ONT::SAY
-    :wordnet-sense-keys ("mention%2:32:00" "note%2:32:00" "observe%2:32:00" "remark%2:32:00" "say%2:32:01" "say%2:32:13" "talk%2:32:00")
+    :wordnet-sense-keys ("mention%2:32:00" "note%2:32:00" "observe%2:32:00" "remark%2:32:00" "say%2:32:01" "say%2:32:13" "talk%2:32:00" "remark%1:14:00")
     :parent ONT::COMMUNICATION
     :comment "A single act of verbal communication, or sequence of acts by the same agent"
     :sem (F::Situation (F::Cause F::agentive))
@@ -3631,7 +3631,7 @@
 ;; 20120524 GUM change new type
 ;; 20121022 GUM change : merging with ont::emit; moving WN mappings here.
 (define-type ont::emit-giveoff-discharge
-    :wordnet-sense-keys ("bubble%2:30:01" "discharge%2:29:00" "emanation%1:04:00" "emission%1:04:00" "emit%2:43:00" "leak%2:30:00")
+    :wordnet-sense-keys ("bubble%2:30:01" "discharge%2:29:00" "emanation%1:04:00" "emission%1:04:00" "emit%2:43:00" "leak%2:30:00" "emission%1:27:00")
 ;    :parent ont::releasing
     :parent ONT::CAUSE-MAKE-THINGS
     )
@@ -4162,7 +4162,7 @@
  )
 
 (define-type ONT::increase
- :wordnet-sense-keys ("increase%1:11:00" "increase%2:30:00" "rise%2:37:00" "increase%1:07:00")
+ :wordnet-sense-keys ("increase%1:11:00" "increase%2:30:00" "rise%2:37:00" "increase%1:07:00" "rise%1:11:00::")
  :parent ONT::change-magnitude
  )
 

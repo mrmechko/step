@@ -590,7 +590,7 @@
 
 (define-type ont::superior-val
  :parent ont::quality-val 
- :wordnet-sense-keys ("superior%3:00:01::" "rich%3:00:03::" "premium%5:00:00:superior:02" "superior%3:00:02" "supreme%5:00:00:superior:02" "sterling%5:00:00:superior:02" )
+ :wordnet-sense-keys ("superior%3:00:01::" "rich%3:00:03::" "premium%5:00:00:superior:02" "superior%3:00:02" "supreme%5:00:00:superior:02" "sterling%5:00:00:superior:02" "hegemony%1:14:00")
  :sem (F::abstr-obj (F::scale ont::superiority-scale))
 )
 

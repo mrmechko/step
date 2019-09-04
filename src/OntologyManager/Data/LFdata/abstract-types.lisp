@@ -8,6 +8,7 @@
 ;;; declares all features as arbibtary vars to override default - features
 (define-type ONT::FACT
  :parent ONT::ABSTRACT-OBJECT-nontemporal
+ :wordnet-sense-keys ("fact%1:09:00")
  :sem (F::Abstr-obj (f::tangible +)) ; facts shouldn't be tangible, but we have it here so that we can add/remove facts (from a graph)
  :arguments ((:optional ONT::formal)
 	     )
@@ -24,7 +25,7 @@
 ;; some kind of replication of the same thing
 ;; version, edition, variant
 (define-type ONT::Version
-    :wordnet-sense-keys ("version%1:09:01" "edition%1:14:00")
+    :wordnet-sense-keys ("version%1:09:01" "edition%1:14:00" "draft%1:10:00")
     :parent ONT::KIND
  )
 
@@ -161,7 +162,7 @@
 		      (:default (F::GRADABILITY +) (F::scale ?!sc)))
   :arguments ((:REQUIRED ONT::FIGURE)
 	      (:REQUIRED ONT::GROUND))
- :wordnet-sense-keys ("best%3:00:00::" "most%3:00:01::" "most%3:00:02::" "ultimate%3:00:00" "maximum%3:00:00")
+ :wordnet-sense-keys ("best%3:00:00::" "most%3:00:01::" "most%3:00:02::" "ultimate%3:00:00" "maximum%3:00:00" "maximum%1:23:00")
 )
 
 ;; worst, least
@@ -462,6 +463,7 @@
 
 (define-type ONT::formal-unit
  :parent ONT::measure-unit
+ :wordnet-sense-keys ("point%1:23:00")
  )
 
 ;; a number/amount/quantity of X
@@ -811,7 +813,7 @@
 
 ;; success, failure
 (define-type ONT::outcome
-    :wordnet-sense-keys ("result%1:11:00")
+    :wordnet-sense-keys ("result%1:11:00" "consequence%1:19:00")
     :parent ONT::information-function-object
     :arguments ((:essential ONT::FIGURE)
 		)
@@ -1048,7 +1050,7 @@
 )
 
 (define-type ONT::knowledge-belief
-    :wordnet-sense-keys ("knowledge%1:03:00" "know_how%1:09:00")
+    :wordnet-sense-keys ("knowledge%1:03:00" "know_how%1:09:00" "basis%1:09:00")
     :parent ONT::mental-construction
     :arguments ((:OPTIONAL ONT::FIGURE) ;(f::situation (f::information f::mental-construct) (f::cause f::mental)))
 		(:optional ont::FORMAL (f::situation)))
@@ -1122,7 +1124,7 @@
 
 (define-type ont::mental-plan
  :parent ont::ps-object
- :wordnet-sense-keys("plan%1:09:01" "plan%1:09:00" "plan_of_action%1:09:00")
+ :wordnet-sense-keys("plan%1:09:01" "plan%1:09:00" "plan_of_action%1:09:00" "play%1:14:00")
  )
 
 (define-type ont::budget
