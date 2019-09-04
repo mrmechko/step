@@ -6341,7 +6341,7 @@
 
 (define-type ONT::hateful-val
   :parent ONT::neg-experiencer-property-val
-  :wordnet-sense-keys ("hateful%3:00:00::" "hatred%1:12;00" "evil%1:07:00")
+  :wordnet-sense-keys ("hateful%3:00:00::" "hatred%1:12:00" "evil%1:07:00")
   :comment "(hateful)"
   )
 

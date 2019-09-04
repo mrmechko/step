@@ -490,7 +490,7 @@
     )
 
 (define-type ONT::SUBSTANCE
-    :wordnet-sense-keys ("substance%1:03:00" "substance%1:03:01" "substance%1:27:00" "matter%1:03:00" "papers%1:27:00")
+    :wordnet-sense-keys ("substance%1:03:00" "substance%1:03:01" "substance%1:27:00" "matter%1:03:00" "paper%1:27:00")
     :parent ONT::material
     )
 
@@ -704,7 +704,7 @@
 
 (define-type ONT::technology
  :parent ONT::manufactured-object
- :wordnet-sense-keys ("technology%1:04:00" "technology%1:06:00")
+ :wordnet-sense-keys ("technology%1:04:00"); "technology%1:06:00")
  :arguments ((:essential ONT::FIGURE)
 	     )
  )
@@ -1747,7 +1747,7 @@
 ;; licenses or agreements
 (define-type ont::official-document
     :parent ont::direct-representation
-    :wordnet-sense-keys ("document%1:10:00" "written_document%1:10:00" "papers%1:10:00")
+    :wordnet-sense-keys ("document%1:10:00" "written_document%1:10:00" "paper%1:10:00")
     )
 
 ;; e.g. invoice

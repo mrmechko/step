@@ -8,7 +8,7 @@
 ;;; declares all features as arbibtary vars to override default - features
 (define-type ONT::FACT
  :parent ONT::ABSTRACT-OBJECT-nontemporal
- :wordnet-sense-keys ("fact%1:09:00")
+ :wordnet-sense-keys ("fact%1:09:01")
  :sem (F::Abstr-obj (f::tangible +)) ; facts shouldn't be tangible, but we have it here so that we can add/remove facts (from a graph)
  :arguments ((:optional ONT::formal)
 	     )
@@ -125,7 +125,7 @@
 
 (define-type ONT::SOCIAL-SYSTEM
     :parent ONT::tangible-abstract-object
-    :wordnet-sense-keys ("political_system%1:09:00")
+    :wordnet-sense-keys ("political_system%1:14:00")
     :sem (F::Abstr-obj)
     )
 
@@ -1050,7 +1050,7 @@
 )
 
 (define-type ONT::knowledge-belief
-    :wordnet-sense-keys ("knowledge%1:03:00" "know_how%1:09:00" "basis%1:09:00")
+    :wordnet-sense-keys ("knowledge%1:03:00" "know-how%1:09:00" "basis%1:09:00")
     :parent ONT::mental-construction
     :arguments ((:OPTIONAL ONT::FIGURE) ;(f::situation (f::information f::mental-construct) (f::cause f::mental)))
 		(:optional ont::FORMAL (f::situation)))
@@ -1124,7 +1124,7 @@
 
 (define-type ont::mental-plan
  :parent ont::ps-object
- :wordnet-sense-keys("plan%1:09:01" "plan%1:09:00" "plan_of_action%1:09:00" "play%1:14:00")
+ :wordnet-sense-keys("plan%1:09:01" "plan%1:09:00" "plan_of_action%1:09:00")
  )
 
 (define-type ont::budget
@@ -1202,7 +1202,7 @@
 ;; task-related things that one commits to
 ;; appointment, schedule, agenda, timeline, campaign
 (define-type ONT::commitment
-    :wordnet-sense-keys ("commiment%1:04:02")
+    :wordnet-sense-keys ("commitment%1:04:02")
  :parent ONT::ps-object
  )
 
