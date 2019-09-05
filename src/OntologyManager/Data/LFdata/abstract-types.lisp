@@ -301,6 +301,7 @@
 
 ;; court
 (define-type ONT::legal-organization-abstr
+ :wordnet-sense-keys ("court%1:14:00::")
  :parent ONT::organization-abstr
  )
 

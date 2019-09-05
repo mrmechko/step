@@ -274,7 +274,7 @@
   )
 
 (define-type ONT::MOVE
-  :wordnet-sense-keys ("make%2:38:05" "take%2:38:05" "travel%2:38:00" "go%2:38:00" "move%2:38:03" "locomote%2:38:00" "be_active%2:29:00" "draw%2:35:13" "go%2:42:06" "jaunt%2:38:00" "move%2:38:00" "move%2:38:02" "move_out%2:41:00" "wreathe%2:38:00" "mobilize%2:30:00" "go%2:33:00" "transport%1:04:01" "relocation%1:04:00")
+  :wordnet-sense-keys ("make%2:38:05" "take%2:38:05" "travel%2:38:00" "go%2:38:00" "move%2:38:03" "locomote%2:38:00" "be_active%2:29:00" "draw%2:35:13" "go%2:42:06" "jaunt%2:38:00" "move%2:38:00" "move%2:38:02" "move_out%2:41:00" "wreathe%2:38:00" "mobilize%2:30:00" "go%2:33:00" "transport%1:04:01" "relocation%1:04:00" "movement%1:11:00::")
  :parent ont::motion
  :sem (F::SITUATION (F::CONTAINER -) (F::Locative -) (F::trajectory +))
  :arguments (;(:OPTIONAL ONT::agent (F::Phys-obj (:required (f::origin (? org f::human f::non-human-animal)))
@@ -974,7 +974,7 @@
 ;;; This is only for movable objects meeting
 ;;; Path meeting gets mapped to intersection
 (define-type ONT::MEET
- :wordnet-sense-keys ("meet%2:41:00" "gather%2:41:00" "assemble%2:41:00" "forgather%2:41:00" "foregather%2:41:00"  "come_across%2:38:00" "encounter%2:33:00" "meet%2:41:03"  "meet%2:41:01")
+ :wordnet-sense-keys ("meet%2:41:00" "gather%2:41:00" "assemble%2:41:00" "forgather%2:41:00" "foregather%2:41:00"  "come_across%2:38:00" "encounter%2:33:00" "meet%2:41:03"  "meet%2:41:01" "visit%1:04:02::")
  :parent ONT::agent-interaction
  :sem (F::SITUATION (F::Trajectory -))
  :arguments (
@@ -5086,6 +5086,7 @@
 ;;; Myrosia 06/09/02 adding an event for a meal
 (define-type ONT::meal-event
  :parent ONT::EVENT-defined-by-activity
+ :wordnet-sense-keys ("dinner%1:14:00::")
  :sem (F::situation (F::cause F::agentive) (F::time-span F::extended) (F::aspect F::dynamic) (F::trajectory -))
  )
 
