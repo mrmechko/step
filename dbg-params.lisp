@@ -40,6 +40,9 @@
 	;get-cached-score
 ))
 
+(setf *max-semantic-skeleton-factor* 1.1)
+(setf *min-semantic-skeleton-factor* 0.9)
+
 (setf *skeleton-wsd-hierarchy* t)
 (setf *dbg-output-stream* t)
 (format *dbg-output-stream* "DBG_PARAMS IS ~A" +dbg-params+)
